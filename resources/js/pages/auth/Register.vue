@@ -35,6 +35,12 @@ const submit = () => {
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="username">Username</Label>
+                    <Input id="username" type="text" required tabindex="2" autocomplete="username" v-model="form.username" placeholder="Username" />
+                    <InputError :message="form.errors.username" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="email">Email address</Label>
                     <Input id="email" type="email" required tabindex="2" autocomplete="email" v-model="form.email" placeholder="email@example.com" />
                     <InputError :message="form.errors.email" />

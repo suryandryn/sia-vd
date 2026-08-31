@@ -3,18 +3,53 @@ import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, BookMarked, CalendarDays, ClipboardList, FileText, Folder, GraduationCap, LayoutGrid, Library, ListChecks, UserRound, Users } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
+const page = usePage<SharedData>();
+
+const navigationByRole: Record<string, NavItem[]> = {
+    admin: [
+        { title: 'Dashboard Admin', href: '/admin', icon: LayoutGrid },
+        { title: 'Semua Data Sistem', href: '/admin/data', icon: FileText },
+        {
+            title: 'Manage User',
+            href: '/admin/users/dosen',
+            icon: Users,
+            items: [
+                { title: 'Dosen', href: '/admin/users/dosen' },
+                { title: 'Mahasiswa', href: '/admin/users/mahasiswa' },
+                { title: 'Karyawan', href: '/admin/users/karyawan' },
+            ],
+        },
+    ],
+    dosen: [
+        { title: 'Beranda', href: '/dosen', icon: LayoutGrid },
+        { title: 'Profile', href: '/settings/profile', icon: UserRound },
+        { title: 'KHS', href: '/dosen/khs', icon: GraduationCap },
+        { title: 'Jadwal Kuliah', href: '/dosen/jadwal', icon: CalendarDays },
+        { title: 'Tugas', href: '/dosen/tugas', icon: ClipboardList },
+        { title: 'Materi', href: '/dosen/materi', icon: BookOpen },
+        { title: 'Quiz', href: '/dosen/quiz', icon: ListChecks },
+    ],
+    mahasiswa: [
+        { title: 'Beranda', href: '/mahasiswa', icon: LayoutGrid },
+        { title: 'Profile', href: '/settings/profile', icon: UserRound },
+        { title: 'KHS', href: '/mahasiswa/khs', icon: GraduationCap, items: [{ title: 'KHS', href: '/mahasiswa/khs' }, { title: 'Transkrip Nilai', href: '/mahasiswa/transkrip' }] },
+        { title: 'Jadwal Kuliah', href: '/mahasiswa/jadwal', icon: CalendarDays },
+        { title: 'Tugas', href: '/mahasiswa/tugas', icon: ClipboardList },
+        { title: 'Materi', href: '/mahasiswa/materi', icon: BookOpen },
+        { title: 'Quiz', href: '/mahasiswa/quiz', icon: ListChecks },
+        { title: 'Perpustakaan', href: '/mahasiswa/perpustakaan', icon: Library },
+        { title: 'Pinjaman Aktif', href: '/mahasiswa/perpustakaan/aktif', icon: BookMarked },
+        { title: 'Riwayat Pinjaman', href: '/mahasiswa/perpustakaan/riwayat', icon: FileText },
+    ],
+};
+
+const mainNavItems = computed(() => navigationByRole[page.props.auth?.user?.role ?? ''] ?? []);
 
 const footerNavItems: NavItem[] = [
     {
