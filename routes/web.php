@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\FakultasController;
+use App\Http\Controllers\Admin\ProgramStudiController;
 use App\Http\Controllers\Admin\UserController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -37,6 +39,11 @@ Route::prefix('admin/users')->middleware(['auth', 'verified', 'role:admin'])->gr
         Route::delete($type.'/{user}', fn (User $user) => app(UserController::class)->destroy($type, $user))
             ->name('admin.users.'.$type.'.destroy');
     }
+});
+
+Route::prefix('admin')->middleware(['auth', 'verified', 'role:admin'])->group(function (): void {
+    Route::resource('fakultas', FakultasController::class)->except('show')->parameters(['fakultas' => 'fakulta'])->names('admin.fakultas');
+    Route::resource('program-studi', ProgramStudiController::class)->except('show')->names('admin.program-studi');
 });
 
 Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(function () {

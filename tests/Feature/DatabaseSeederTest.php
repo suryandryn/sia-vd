@@ -2,7 +2,9 @@
 
 use App\Models\AdminProfile;
 use App\Models\DosenProfile;
+use App\Models\Fakultas;
 use App\Models\MahasiswaProfile;
+use App\Models\ProgramStudi;
 use App\Models\User;
 use App\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +20,10 @@ it('seeds role users without duplicates', function () {
         ->and(AdminProfile::count())->toBe(1)
         ->and(DosenProfile::count())->toBe(51)
         ->and(MahasiswaProfile::count())->toBe(101)
+        ->and(Fakultas::count())->toBe(2)
+        ->and(ProgramStudi::count())->toBe(4)
+        ->and(Fakultas::where('kode_fakultas', 'FTI')->whereHas('dekan')->whereHas('programStudis', fn ($query) => $query->where('kode_prodi', 'TI-S1')->whereHas('ketuaProgramStudi'))->exists())->toBeTrue()
+        ->and(ProgramStudi::where('kode_prodi', 'AK-S1')->whereHas('fakultas', fn ($query) => $query->where('kode_fakultas', 'FEB'))->whereHas('ketuaProgramStudi')->exists())->toBeTrue()
         ->and(User::where('role', Role::Dosen->value)->count())->toBe(51)
         ->and(User::where('role', Role::Mahasiswa->value)->count())->toBe(101)
         ->and(User::where('username', 'admin')->whereHas('adminProfile', fn ($query) => $query->whereKeyNot(0))->exists())->toBeTrue()

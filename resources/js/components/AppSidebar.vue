@@ -15,6 +15,8 @@ const navigationByRole: Record<string, NavItem[]> = {
     admin: [
         { title: 'Dashboard Admin', href: '/admin', icon: LayoutGrid },
         { title: 'Semua Data Sistem', href: '/admin/data', icon: FileText },
+        { title: 'Fakultas', href: route('admin.fakultas.index'), icon: GraduationCap },
+        { title: 'Program Studi', href: route('admin.program-studi.index'), icon: BookOpen },
         {
             title: 'Manage User',
             href: '/admin/users/dosen',
