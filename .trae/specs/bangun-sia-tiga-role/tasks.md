@@ -11,7 +11,13 @@
   - [ ] Pastikan setiap menu memiliki route bernama dan halaman Inertia yang dapat dibuka oleh role tepat.
   - [ ] Pastikan akses URL lintas role ditolak.
 - [x] Task 4: Tambahkan pengujian feature untuk login, redirect dashboard, navigasi, dan pembatasan akses.
-  - [ ] Jalankan test terfokus dan formatter PHP bila ada perubahan PHP.
+  - [x] Jalankan test terfokus dan formatter PHP bila ada perubahan PHP.
+
+- [x] Task 5: Tetapkan arsitektur penyimpanan user sebelum modul akademik berkembang.
+  - [x] Pertahankan satu tabel `users` untuk autentikasi seluruh role.
+  - [x] Pisahkan profil umum ke tabel `user_profiles` dengan relasi one-to-one.
+  - [x] Tidak ada tabel domain mahasiswa/dosen spekulatif; atribut khusus akademik belum ada.
+  - [x] Migrasikan field profil umum saat penerapan skema baru tanpa menghapus data user.
 
 # Task Dependencies
 - Task 2 depends on Task 1.

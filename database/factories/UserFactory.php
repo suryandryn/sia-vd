@@ -23,6 +23,22 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            ($user->role === Role::Admin ? $user->adminProfile() : ($user->role === Role::Dosen ? $user->dosenProfile() : $user->mahasiswaProfile()))->create([
+                ($user->role === Role::Dosen ? 'nidn' : 'nim') => fake()->unique()->numerify('########'),
+                'tempat_lahir' => fake()->city(),
+                'tanggal_lahir' => fake()->date(),
+                'jenis_kelamin' => fake()->randomElement(['Laki-laki', 'Perempuan']),
+                'agama' => 'Islam',
+                'no_telepon' => fake()->phoneNumber(),
+                'alamat' => fake()->address(),
+                'kewarganegaraan' => 'Indonesia',
+            ]);
+        });
+    }
+
     public function definition(): array
     {
         return [
@@ -32,14 +48,6 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => Role::Mahasiswa,
-            'nomor_induk' => fake()->unique()->numerify('########'),
-            'tempat_lahir' => fake()->city(),
-            'tanggal_lahir' => fake()->date(),
-            'jenis_kelamin' => fake()->randomElement(['Laki-laki', 'Perempuan']),
-            'agama' => 'Islam',
-            'no_telepon' => fake()->phoneNumber(),
-            'alamat' => fake()->address(),
-            'kewarganegaraan' => 'Indonesia',
             'remember_token' => Str::random(10),
         ];
     }

@@ -10,3 +10,7 @@
 - [x] Perpustakaan mahasiswa memiliki submenu Pinjaman Aktif dan Riwayat Pinjaman.
 - [x] Area admin tersedia, dapat melihat seluruh data, dan tidak dapat diakses role lain.
 - [x] Test feature terkait role dan akses lulus.
+- [x] Autentikasi seluruh role memakai satu tabel `users`.
+- [x] Profil umum tersimpan di `user_profiles` melalui relasi one-to-one.
+- [x] Tidak ada tabel domain spekulatif; tabel dibuat saat aturan bisnis membutuhkannya.
+- [x] Password tidak diduplikasi di tabel profil atau tabel role.

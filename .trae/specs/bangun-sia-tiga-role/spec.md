@@ -61,7 +61,8 @@ Sistem SHALL menyediakan role admin yang dapat melihat seluruh data yang tersedi
 - **THEN** sistem mengarahkan admin ke area administrasi dan membatasi area tersebut untuk admin.
 
 ## MODIFIED Requirements
-Tidak ada.
+### Requirement: Area admin
+Admin dapat melihat seluruh data sistem, tetapi struktur data user tetap mengikuti satu sumber autentikasi dan profil terpisah sesuai kebutuhan domain.
 
 ## REMOVED Requirements
 Tidak ada.

@@ -34,6 +34,8 @@ Route::prefix('admin/users')->middleware(['auth', 'verified', 'role:admin'])->gr
             ->name('admin.users.'.$type.'.edit');
         Route::put($type.'/{user}', fn (Request $request, User $user) => app(UserController::class)->update($request, $type, $user))
             ->name('admin.users.'.$type.'.update');
+        Route::delete($type.'/{user}', fn (User $user) => app(UserController::class)->destroy($type, $user))
+            ->name('admin.users.'.$type.'.destroy');
     }
 });
 
