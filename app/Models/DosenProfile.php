@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DosenProfile extends Model
 {
-    protected $fillable = ['user_id', 'nidn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'agama', 'no_telepon', 'alamat', 'kewarganegaraan', 'jabatan_fungsional', 'pendidikan_terakhir', 'status_kepegawaian'];
+    protected $fillable = ['user_id', 'nidn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'agama', 'no_telepon', 'alamat', 'kewarganegaraan', 'jabatan_fungsional', 'pendidikan_terakhir', 'status_kepegawaian', 'prodi_id'];
 
     protected function casts(): array
     {
@@ -18,6 +18,11 @@ class DosenProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function prodi(): BelongsTo
+    {
+        return $this->belongsTo(ProgramStudi::class, 'prodi_id');
     }
 
     public function mahasiswaWali(): HasMany

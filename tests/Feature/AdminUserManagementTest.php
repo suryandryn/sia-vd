@@ -1,7 +1,17 @@
 <?php
 
+use App\Models\Fakultas;
+use App\Models\ProgramStudi;
 use App\Models\User;
 use App\Role;
+
+function createProgramStudi(): ProgramStudi
+{
+    $dekan = User::factory()->create(['role' => Role::Dosen]);
+    $fakultas = Fakultas::create(['kode_fakultas' => 'FTI', 'nama_fakultas' => 'Fakultas Teknologi Informasi', 'dekan_id' => $dekan->dosenProfile->id, 'tanggal_berdiri' => '2001-08-17', 'no_telp' => '021-5551001', 'email' => 'fti@example.ac.id']);
+
+    return ProgramStudi::create(['fakultas_id' => $fakultas->id, 'kode_prodi' => 'TI-S1', 'nama_prodi' => 'Teknik Informatika', 'jenjang' => 'S1', 'status_akreditasi' => 'Unggul', 'tanggal_akreditasi_mulai' => '2022-06-01', 'tanggal_akreditasi_akhir' => '2027-06-01', 'kaprodi' => $dekan->dosenProfile->id, 'tahun_berdiri' => 2001]);
+}
 
 it('shows filtered users with pagination and admin under karyawan', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
@@ -29,6 +39,7 @@ it('shows filtered users with pagination and admin under karyawan', function () 
 it('creates dosen and edits users with self-excluded unique fields', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
     $dosen = User::factory()->create(['role' => Role::Dosen]);
+    $prodi = createProgramStudi();
 
     $payload = [
         'name' => 'Dosen Baru', 'username' => 'dosen-baru', 'email' => 'baru@example.com',
@@ -37,7 +48,7 @@ it('creates dosen and edits users with self-excluded unique fields', function ()
         'jenis_kelamin' => 'Laki-laki', 'agama' => 'Islam', 'no_telepon' => '08123456789',
         'alamat' => 'Jl. Merdeka', 'kewarganegaraan' => 'Indonesia',
         'jabatan_fungsional' => 'Asisten Ahli', 'pendidikan_terakhir' => 'S2',
-        'status_kepegawaian' => 'Tetap',
+        'status_kepegawaian' => 'Tetap', 'prodi_id' => $prodi->id,
     ];
 
     $this->actingAs($admin)->post(route('admin.users.dosen.store'), $payload)->assertRedirect()->assertSessionHas('success', 'User berhasil ditambahkan.');
@@ -60,10 +71,11 @@ it('validates required profile fields and new dropdown values', function () {
     ]);
 
     $dosenWali = User::factory()->create(['role' => Role::Dosen]);
+    $prodi = createProgramStudi();
     $mahasiswaPayload = [
         'name' => 'Mahasiswa Lengkap', 'username' => 'mhs-lengkap', 'email' => 'lengkap@example.com',
         'nim' => '11111111', 'angkatan' => 2024, 'semester' => 2, 'status' => 'Aktif',
-        'dosen_wali_id' => $dosenWali->dosenProfile->id, 'sekolah_asal' => 'SMA Negeri 1',
+        'dosen_wali_id' => $dosenWali->dosenProfile->id, 'prodi_id' => $prodi->id, 'sekolah_asal' => 'SMA Negeri 1',
         'nisn' => '1234567890', 'email_alternatif' => 'alt@example.com',
         'nama_ayah_kandung' => 'Ayah', 'nama_ibu_kandung' => 'Ibu',
         'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '2001-03-04', 'jenis_kelamin' => 'Perempuan',

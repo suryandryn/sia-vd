@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DosenProfile;
+use App\Models\ProgramStudi;
 use App\Models\User;
 use App\Role;
 use Illuminate\Http\RedirectResponse;
@@ -48,7 +49,11 @@ class UserController extends Controller
     {
         $this->role($type);
 
-        return Inertia::render('Admin/UserForm', ['title' => 'Tambah User - '.ucfirst($type), 'type' => $type, 'user' => null, 'dosenWali' => $type === 'mahasiswa' ? DosenProfile::with('user:id,name')->get(['id', 'user_id'])->map(fn (DosenProfile $profile): array => ['id' => $profile->id, 'name' => $profile->user->name]) : []]);
+        return Inertia::render('Admin/UserForm', [
+            'title' => 'Tambah User - '.ucfirst($type), 'type' => $type, 'user' => null,
+            'dosenWali' => $type === 'mahasiswa' ? $this->dosenOptions() : [],
+            'programStudi' => $type !== 'karyawan' ? $this->programStudiOptions() : [],
+        ]);
     }
 
     public function edit(string $type, User $user): Response
@@ -57,7 +62,23 @@ class UserController extends Controller
         abort_unless($user->role === $role, 404);
         $user->load($this->profileRelation($role));
 
-        return Inertia::render('Admin/UserForm', ['title' => 'Edit User - '.ucfirst($type), 'type' => $type, 'user' => $user->only(['id', 'name', 'username', 'email']) + ($user->profile?->toArray() ?? []), 'dosenWali' => $type === 'mahasiswa' ? DosenProfile::with('user:id,name')->get(['id', 'user_id'])->map(fn (DosenProfile $profile): array => ['id' => $profile->id, 'name' => $profile->user->name]) : []]);
+        return Inertia::render('Admin/UserForm', [
+            'title' => 'Edit User - '.ucfirst($type), 'type' => $type,
+            'user' => $user->only(['id', 'name', 'username', 'email']) + ($user->profile?->toArray() ?? []),
+            'dosenWali' => $type === 'mahasiswa' ? $this->dosenOptions() : [],
+            'programStudi' => $type !== 'karyawan' ? $this->programStudiOptions() : [],
+        ]);
+    }
+
+    private function dosenOptions(): array
+    {
+        return DosenProfile::with('user:id,name')->get(['id', 'user_id'])->map(fn (DosenProfile $profile): array => ['id' => $profile->id, 'name' => $profile->user->name])->all();
+    }
+
+    private function programStudiOptions(): array
+    {
+        return ProgramStudi::with('fakultas:id,nama_fakultas')->orderBy('nama_prodi')->get()
+            ->map(fn (ProgramStudi $prodi): array => ['id' => $prodi->id, 'nama_prodi' => $prodi->nama_prodi, 'jenjang' => $prodi->jenjang, 'fakultas' => $prodi->fakultas?->nama_fakultas])->all();
     }
 
     public function store(Request $request, string $type): RedirectResponse
@@ -134,10 +155,10 @@ class UserController extends Controller
             Role::Admin => 'nomor_induk', Role::Dosen => 'nidn', Role::Mahasiswa => 'nim'
         };
         if ($role === Role::Dosen) {
-            $fields = [...$fields, 'jabatan_fungsional', 'pendidikan_terakhir', 'status_kepegawaian'];
+            $fields = [...$fields, 'jabatan_fungsional', 'pendidikan_terakhir', 'status_kepegawaian', 'prodi_id'];
         }
         if ($role === Role::Mahasiswa) {
-            $fields = [...$fields, 'angkatan', 'semester', 'status', 'dosen_wali_id', 'sekolah_asal', 'nisn', 'email_alternatif', 'nama_ayah_kandung', 'nama_ibu_kandung'];
+            $fields = [...$fields, 'angkatan', 'semester', 'status', 'dosen_wali_id', 'prodi_id', 'sekolah_asal', 'nisn', 'email_alternatif', 'nama_ayah_kandung', 'nama_ibu_kandung'];
         }
 
         return array_intersect_key($data, array_flip(array_filter($fields)));
@@ -152,10 +173,10 @@ class UserController extends Controller
         $rules['jenis_kelamin'] = ['required', 'in:Laki-laki,Perempuan'];
         $rules['agama'] = ['required', 'in:Islam,Kristen Protestan,Katolik,Hindu,Buddha,Konghucu'];
         if ($role === Role::Dosen) {
-            $rules += ['nidn' => ['required', 'string', 'max:50', Rule::unique('dosen_profiles')->ignore($user?->dosenProfile?->id)], 'jabatan_fungsional' => ['required', 'string', 'max:100'], 'pendidikan_terakhir' => ['required', 'string', 'max:100'], 'status_kepegawaian' => ['required', 'string', 'max:100']];
+            $rules += ['nidn' => ['required', 'string', 'max:50', Rule::unique('dosen_profiles')->ignore($user?->dosenProfile?->id)], 'jabatan_fungsional' => ['required', 'string', 'max:100'], 'pendidikan_terakhir' => ['required', 'string', 'max:100'], 'status_kepegawaian' => ['required', 'string', 'max:100'], 'prodi_id' => ['required', 'exists:program_studis,id']];
         }
         if ($role === Role::Mahasiswa) {
-            $rules += ['nim' => ['nullable', 'string', 'max:50', Rule::unique('mahasiswa_profiles')->ignore($user?->mahasiswaProfile?->id)], 'angkatan' => ['required', 'integer'], 'semester' => ['required', 'integer'], 'status' => ['required', 'in:Aktif,Nonaktif,Lulus,Dropout,Cuti,Mengundurkan Diri,Meninggal,Transfer Masuk'], 'dosen_wali_id' => ['required', 'exists:dosen_profiles,id'], 'sekolah_asal' => ['required', 'string', 'max:255'], 'nisn' => ['required', 'string', 'max:50'], 'email_alternatif' => ['required', 'email', 'max:255'], 'nama_ayah_kandung' => ['required', 'string', 'max:255'], 'nama_ibu_kandung' => ['required', 'string', 'max:255']];
+            $rules += ['nim' => ['nullable', 'string', 'max:50', Rule::unique('mahasiswa_profiles')->ignore($user?->mahasiswaProfile?->id)], 'angkatan' => ['required', 'integer'], 'semester' => ['required', 'integer'], 'status' => ['required', 'in:Aktif,Nonaktif,Lulus,Dropout,Cuti,Mengundurkan Diri,Meninggal,Transfer Masuk'], 'dosen_wali_id' => ['required', 'exists:dosen_profiles,id'], 'prodi_id' => ['required', 'exists:program_studis,id'], 'sekolah_asal' => ['required', 'string', 'max:255'], 'nisn' => ['required', 'string', 'max:50'], 'email_alternatif' => ['required', 'email', 'max:255'], 'nama_ayah_kandung' => ['required', 'string', 'max:255'], 'nama_ibu_kandung' => ['required', 'string', 'max:255']];
         }
         $rules['tanggal_lahir'] = ['required', 'date'];
 

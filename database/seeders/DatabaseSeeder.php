@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $dosenProfiles = [];
+
         $dosen = User::updateOrCreate(['username' => '22222'], ['name' => 'Budi Santoso', 'email' => '22222@example.com', 'password' => Hash::make('22222'), 'role' => Role::Dosen]);
         $dosenProfiles[] = $dosen->dosenProfile()->updateOrCreate([], ['nidn' => 'D22222', 'tempat_lahir' => 'Bandung', 'tanggal_lahir' => '1980-02-22', 'jenis_kelamin' => 'Laki-laki', 'agama' => 'Islam', 'no_telepon' => '081222222222', 'alamat' => 'Jl. Dosen No. 22, Bandung', 'kewarganegaraan' => 'Indonesia', 'jabatan_fungsional' => 'Lektor', 'pendidikan_terakhir' => 'S3', 'status_kepegawaian' => 'Tetap']);
 
@@ -64,13 +65,19 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        $programStudiIds = ProgramStudi::pluck('id')->all();
+
+        foreach ($dosenProfiles as $index => $profile) {
+            $profile->update(['prodi_id' => $programStudiIds[$index % count($programStudiIds)]]);
+        }
+
         $mahasiswa = User::updateOrCreate(['username' => '33333'], ['name' => 'Citra Maharani', 'email' => '33333@example.com', 'password' => Hash::make('33333'), 'role' => Role::Mahasiswa]);
-        $mahasiswa->mahasiswaProfile()->updateOrCreate([], ['nim' => '33333', 'angkatan' => 2023, 'semester' => 6, 'status' => 'Aktif', 'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '2003-03-03', 'jenis_kelamin' => 'Perempuan', 'agama' => 'Islam', 'no_telepon' => '081333333333', 'alamat' => 'Jl. Mahasiswa No. 33, Jakarta', 'kewarganegaraan' => 'Indonesia', 'dosen_wali_id' => $dosenProfiles[0]->id, 'sekolah_asal' => $sekolah[0], 'nisn' => '0033333333', 'email_alternatif' => 'citra@gmail.com', 'nama_ayah_kandung' => 'Hendra Maharani', 'nama_ibu_kandung' => 'Lina Maharani']);
+        $mahasiswa->mahasiswaProfile()->updateOrCreate([], ['nim' => '33333', 'angkatan' => 2023, 'semester' => 6, 'status' => 'Aktif', 'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '2003-03-03', 'jenis_kelamin' => 'Perempuan', 'agama' => 'Islam', 'no_telepon' => '081333333333', 'alamat' => 'Jl. Mahasiswa No. 33, Jakarta', 'kewarganegaraan' => 'Indonesia', 'dosen_wali_id' => $dosenProfiles[0]->id, 'prodi_id' => $programStudiIds[0], 'sekolah_asal' => $sekolah[0], 'nisn' => '0033333333', 'email_alternatif' => 'citra@gmail.com', 'nama_ayah_kandung' => 'Hendra Maharani', 'nama_ibu_kandung' => 'Lina Maharani']);
 
         for ($index = 1; $index <= 100; $index++) {
             $username = 'mahasiswa'.$index;
             $user = User::updateOrCreate(['username' => $username], ['name' => ['Fajar', 'Nabila', 'Dimas', 'Putri', 'Bagas'][$index % 5].' '.['Saputra', 'Anggraini', 'Kurniawan', 'Salsabila', 'Ramadhan'][$index % 5], 'email' => $username.'@example.com', 'password' => Hash::make($username), 'role' => Role::Mahasiswa]);
-            $user->mahasiswaProfile()->updateOrCreate([], ['nim' => 'M'.str_pad((string) $index, 5, '0', STR_PAD_LEFT), 'angkatan' => 2022 + ($index % 3), 'semester' => 2 + ($index % 8), 'status' => 'Aktif', 'tempat_lahir' => $kota[$index % count($kota)], 'tanggal_lahir' => '200'.($index % 6).'-'.str_pad((string) (($index - 1) % 12 + 1), 2, '0', STR_PAD_LEFT).'-'.str_pad((string) (($index - 1) % 25 + 1), 2, '0', STR_PAD_LEFT), 'jenis_kelamin' => $jenisKelamin[$index % 2], 'agama' => $agama[$index % count($agama)], 'no_telepon' => '0821'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'alamat' => 'Jl. Pelajar No. '.$index.', '.$kota[$index % count($kota)], 'kewarganegaraan' => 'Indonesia', 'dosen_wali_id' => $dosenProfiles[$index % count($dosenProfiles)]->id, 'sekolah_asal' => $sekolah[$index % count($sekolah)], 'nisn' => '00'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'email_alternatif' => $username.'@mail.com', 'nama_ayah_kandung' => 'Joko '.$user->name, 'nama_ibu_kandung' => 'Sari '.$user->name]);
+            $user->mahasiswaProfile()->updateOrCreate([], ['nim' => 'M'.str_pad((string) $index, 5, '0', STR_PAD_LEFT), 'angkatan' => 2022 + ($index % 3), 'semester' => 2 + ($index % 8), 'status' => 'Aktif', 'tempat_lahir' => $kota[$index % count($kota)], 'tanggal_lahir' => '200'.($index % 6).'-'.str_pad((string) (($index - 1) % 12 + 1), 2, '0', STR_PAD_LEFT).'-'.str_pad((string) (($index - 1) % 25 + 1), 2, '0', STR_PAD_LEFT), 'jenis_kelamin' => $jenisKelamin[$index % 2], 'agama' => $agama[$index % count($agama)], 'no_telepon' => '0821'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'alamat' => 'Jl. Pelajar No. '.$index.', '.$kota[$index % count($kota)], 'kewarganegaraan' => 'Indonesia', 'dosen_wali_id' => $dosenProfiles[$index % count($dosenProfiles)]->id, 'prodi_id' => $programStudiIds[$index % count($programStudiIds)], 'sekolah_asal' => $sekolah[$index % count($sekolah)], 'nisn' => '00'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'email_alternatif' => $username.'@mail.com', 'nama_ayah_kandung' => 'Joko '.$user->name, 'nama_ibu_kandung' => 'Sari '.$user->name]);
         }
     }
 }
