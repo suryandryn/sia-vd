@@ -21,12 +21,27 @@ class UserController extends Controller
     public function index(Request $request, string $type): Response
     {
         $role = $this->role($type);
+        $search = $request->string('search')->trim();
         $users = User::query()->where('role', $role)
             ->with($this->profileRelation($role))
+            ->when($search->isNotEmpty(), fn ($query) => $query->where(function ($query) use ($search, $role): void {
+                $query->where('name', 'like', "%{$search}%");
+                $idColumn = match ($role) {
+                    Role::Admin => 'nomor_induk',
+                    Role::Dosen => 'nidn',
+                    Role::Mahasiswa => 'nim',
+                };
+                $table = match ($role) {
+                    Role::Admin => 'admin_profiles',
+                    Role::Dosen => 'dosen_profiles',
+                    Role::Mahasiswa => 'mahasiswa_profiles',
+                };
+                $query->orWhereHas($this->profileRelation($role), fn ($profile) => $profile->where($table.'.'.$idColumn, 'like', "%{$search}%"));
+            }))
             ->select(['id', 'name', 'username', 'email', 'role'])->orderBy('name')->paginate(10)->withQueryString()
             ->through(fn (User $user): array => $user->only(['id', 'name', 'username', 'email']) + ['profile' => $user->profile?->toArray()]);
 
-        return Inertia::render('Admin/Users', ['title' => 'Manage User - '.ucfirst($type), 'type' => $type, 'users' => $users]);
+        return Inertia::render('Admin/Users', ['title' => 'Manage User - '.ucfirst($type), 'type' => $type, 'users' => $users, 'search' => $search->toString()]);
     }
 
     public function create(string $type): Response

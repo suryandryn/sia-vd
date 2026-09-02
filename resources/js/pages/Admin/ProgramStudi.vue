@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ref, watch } from 'vue';
+import { Pencil, Trash2 } from 'lucide-vue-next';
 
 const page = usePage<{ flash: { success?: string; error?: string } }>();
 
@@ -65,8 +66,12 @@ const remove = (item: ProgramStudi) => {
                             <td class="p-3">{{ item.status_akreditasi }}</td>
                             <td class="p-3">{{ item.ketuaProgramStudi?.user?.name ?? '-' }}</td>
                             <td class="flex gap-2 p-3">
-                                <Link :href="route('admin.program-studi.edit', item.id)" class="underline">Edit</Link>
-                                <button type="button" class="text-destructive underline" @click="remove(item)">Hapus</button>
+                                <Link :href="route('admin.program-studi.edit', item.id)" title="Edit" aria-label="Edit">
+                                    <Button variant="outline" class="size-8 p-0 text-blue-600 hover:text-blue-700" aria-hidden="true"><Pencil class="size-4" /></Button>
+                                </Link>
+                                <button type="button" title="Hapus" aria-label="Hapus" @click="remove(item)">
+                                    <Button variant="outline" class="size-8 p-0 text-red-600 hover:text-red-700" aria-hidden="true"><Trash2 class="size-4" /></Button>
+                                </button>
                             </td>
                         </tr>
                         <tr v-if="!props.programStudis.data.length">
