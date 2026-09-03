@@ -62,9 +62,15 @@ class UserController extends Controller
         abort_unless($user->role === $role, 404);
         $user->load($this->profileRelation($role));
 
+        $profile = $user->profile?->toArray();
+        // Normalisasi tanggal ke YYYY-MM-DD untuk DatePicker.
+        if (isset($profile['tanggal_lahir'])) {
+            $profile['tanggal_lahir'] = substr((string) $profile['tanggal_lahir'], 0, 10);
+        }
+
         return Inertia::render('Admin/UserForm', [
             'title' => 'Edit User - '.ucfirst($type), 'type' => $type,
-            'user' => $user->only(['id', 'name', 'username', 'email']) + ($user->profile?->toArray() ?? []),
+            'user' => $user->only(['id', 'name', 'username', 'email']) + ($profile ?? []),
             'dosenWali' => $type === 'mahasiswa' ? $this->dosenOptions() : [],
             'programStudi' => $type !== 'karyawan' ? $this->programStudiOptions() : [],
         ]);
