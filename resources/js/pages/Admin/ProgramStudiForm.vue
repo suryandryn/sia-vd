@@ -3,6 +3,7 @@ import { Head, Link, usePage, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import InputError from '@/components/InputError.vue';
 import SearchSelect from '@/components/SearchSelect.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,12 +82,12 @@ const submit = () => (props.programStudi ? form.put(route('admin.program-studi.u
                 </div>
                 <div class="grid gap-2">
                     <Label for="tanggal_akreditasi_mulai">Tanggal Akreditasi Mulai</Label>
-                    <Input id="tanggal_akreditasi_mulai" v-model="form.tanggal_akreditasi_mulai" type="date" required />
+                    <DatePicker id="tanggal_akreditasi_mulai" v-model="form.tanggal_akreditasi_mulai" placeholder="Pilih tanggal mulai" />
                     <InputError :message="form.errors.tanggal_akreditasi_mulai" />
                 </div>
                 <div class="grid gap-2">
                     <Label for="tanggal_akreditasi_akhir">Tanggal Akreditasi Akhir</Label>
-                    <Input id="tanggal_akreditasi_akhir" v-model="form.tanggal_akreditasi_akhir" type="date" required />
+                    <DatePicker id="tanggal_akreditasi_akhir" v-model="form.tanggal_akreditasi_akhir" placeholder="Pilih tanggal akhir" />
                     <InputError :message="form.errors.tanggal_akreditasi_akhir" />
                 </div>
                 <div class="grid gap-2">

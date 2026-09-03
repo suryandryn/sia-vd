@@ -3,6 +3,7 @@ import { Head, Link, usePage, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import InputError from '@/components/InputError.vue';
 import SearchSelect from '@/components/SearchSelect.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -53,7 +54,7 @@ const submit = () => (props.fakultas ? form.put(route('admin.fakultas.update', p
                 </div>
                 <div class="grid gap-2">
                     <Label for="tanggal_berdiri">Tanggal Berdiri</Label>
-                    <Input id="tanggal_berdiri" v-model="form.tanggal_berdiri" type="date" required />
+                    <DatePicker id="tanggal_berdiri" v-model="form.tanggal_berdiri" placeholder="Pilih tanggal berdiri" />
                     <InputError :message="form.errors.tanggal_berdiri" />
                 </div>
                 <div class="grid gap-2">
