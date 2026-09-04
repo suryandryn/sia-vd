@@ -56,6 +56,27 @@ class UserController extends Controller
         ]);
     }
 
+    public function show(string $type, User $user): Response
+    {
+        $role = $this->role($type);
+        abort_unless($user->role === $role, 404);
+        $user->load(array_merge([$this->profileRelation($role)], $role === Role::Mahasiswa ? ['mahasiswaProfile.dosenWali.user', 'mahasiswaProfile.prodi.fakultas'] : [], $role === Role::Dosen ? ['dosenProfile.prodi.fakultas'] : []));
+
+        $profile = $user->profile?->toArray();
+        $extra = [];
+        if ($role === Role::Mahasiswa && $user->mahasiswaProfile) {
+            $extra['dosen_wali_name'] = $user->mahasiswaProfile->dosenWali?->user?->name;
+            $extra['prodi_name'] = $user->mahasiswaProfile->prodi?->nama_prodi;
+            $extra['prodi_jenjang'] = $user->mahasiswaProfile->prodi?->jenjang;
+            $extra['fakultas_name'] = $user->mahasiswaProfile->prodi?->fakultas?->nama_fakultas;
+        }
+
+        return Inertia::render('Admin/UserShow', [
+            'title' => 'Detail '.ucfirst($type).' - '.$user->name, 'type' => $type,
+            'user' => $user->only(['id', 'name', 'username', 'email']) + ($profile ?? []) + $extra,
+        ]);
+    }
+
     public function edit(string $type, User $user): Response
     {
         $role = $this->role($type);

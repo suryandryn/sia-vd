@@ -32,6 +32,8 @@ Route::prefix('admin/users')->middleware(['auth', 'verified', 'role:admin'])->gr
             ->name('admin.users.'.$type.'.create');
         Route::post($type, fn (Request $request) => app(UserController::class)->store($request, $type))
             ->name('admin.users.'.$type.'.store');
+        Route::get($type.'/{user}', fn (User $user) => app(UserController::class)->show($type, $user))
+            ->name('admin.users.'.$type.'.show');
         Route::get($type.'/{user}/edit', fn (User $user) => app(UserController::class)->edit($type, $user))
             ->name('admin.users.'.$type.'.edit');
         Route::put($type.'/{user}', fn (Request $request, User $user) => app(UserController::class)->update($request, $type, $user))

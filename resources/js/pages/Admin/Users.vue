@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { Pencil, Trash2 } from 'lucide-vue-next';
+import { Eye, Pencil, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -65,6 +65,14 @@ const remove = (user: User) => {
                             <td class="p-3">{{ user.username }}</td>
                             <td class="p-3">{{ user.email }}</td>
                             <td class="flex gap-2 p-3">
+                                <Link
+                                    v-if="props.type === 'mahasiswa'"
+                                    :href="route(`admin.users.${props.type}.show`, user.id)"
+                                    title="Lihat Detail"
+                                    aria-label="Lihat Detail"
+                                >
+                                    <Button variant="outline" class="size-8 p-0 text-emerald-600 hover:text-emerald-700" aria-hidden="true"><Eye class="size-4" /></Button>
+                                </Link>
                                 <Link :href="route(`admin.users.${props.type}.edit`, user.id)" title="Edit" aria-label="Edit">
                                     <Button variant="outline" class="size-8 p-0 text-blue-600 hover:text-blue-700" aria-hidden="true"><Pencil class="size-4" /></Button>
                                 </Link>
