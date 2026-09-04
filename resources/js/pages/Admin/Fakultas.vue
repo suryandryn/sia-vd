@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import AlertModal from '@/components/AlertModal.vue';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ref, watch } from 'vue';
@@ -16,10 +17,22 @@ const props = defineProps<{ fakultas: Pagination; search?: string }>();
 const search = ref(props.search ?? '');
 watch(search, (value) => router.get(route('admin.fakultas.index'), { search: value }, { preserveState: true, preserveScroll: true }));
 
+const confirmOpen = ref(false);
+const pendingItem = ref<Fakultas | null>(null);
+
 const remove = (item: Fakultas) => {
-    if (window.confirm(`Hapus Fakultas ${item.nama_fakultas}?`)) {
-        router.delete(route('admin.fakultas.destroy', item.id));
-    }
+    pendingItem.value = item;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    if (!pendingItem.value) return;
+    router.delete(route('admin.fakultas.destroy', pendingItem.value.id), {
+        onFinish: () => {
+            confirmOpen.value = false;
+            pendingItem.value = null;
+        },
+    });
 };
 </script>
 
@@ -72,6 +85,16 @@ const remove = (item: Fakultas) => {
                     </tbody>
                 </table>
             </div>
+            <AlertModal
+                :open="confirmOpen"
+                description="Anda yakin ingin menghapus data ini?"
+                confirm-text="Ya"
+                cancel-text="Batal"
+                @update:open="confirmOpen = $event"
+                @confirm="confirmDelete"
+                @cancel="confirmOpen = false"
+            />
+
             <nav v-if="props.fakultas.total > 0" class="flex flex-wrap gap-2" aria-label="Pagination">
                 <Link
                     v-for="link in props.fakultas.links"

@@ -19,6 +19,10 @@ class UserController extends Controller
 {
     private const COMMON_PROFILE_FIELDS = ['tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'agama', 'no_telepon', 'alamat', 'kewarganegaraan'];
 
+    private const PEKERJAAN_OPTIONS = ['Tidak Bekerja', 'Karyawan Swasta', 'Pegawai Negeri Sipil (PNS)', 'TNI / Polri', 'Wiraswasta / Pengusaha', 'Profesional', 'Guru / Dosen', 'Tenaga Kesehatan', 'Petani', 'Peternak', 'Nelayan', 'Pedagang', 'Ibu Rumah Tangga', 'Freelancer', 'Pensiunan', 'Sudah Meninggal', 'Lainnya'];
+
+    private const PENGHASILAN_OPTIONS = ['Kurang dari Rp1.000.000', 'Rp1.000.000 – Rp2.999.999', 'Rp3.000.000 – Rp4.999.999', 'Rp5.000.000 – Rp7.499.999', 'Rp7.500.000 – Rp9.999.999', 'Rp10.000.000 – Rp14.999.999', 'Rp15.000.000 atau lebih', 'Tidak Berpenghasilan'];
+
     public function index(Request $request, string $type): Response
     {
         $role = $this->role($type);
@@ -68,7 +72,16 @@ class UserController extends Controller
             $extra['dosen_wali_name'] = $user->mahasiswaProfile->dosenWali?->user?->name;
             $extra['prodi_name'] = $user->mahasiswaProfile->prodi?->nama_prodi;
             $extra['prodi_jenjang'] = $user->mahasiswaProfile->prodi?->jenjang;
+            $extra['prodi_kode'] = $user->mahasiswaProfile->prodi?->kode_prodi;
             $extra['fakultas_name'] = $user->mahasiswaProfile->prodi?->fakultas?->nama_fakultas;
+            $extra['fakultas_kode'] = $user->mahasiswaProfile->prodi?->fakultas?->kode_fakultas;
+        }
+        if ($role === Role::Dosen && $user->dosenProfile) {
+            $extra['prodi_name'] = $user->dosenProfile->prodi?->nama_prodi;
+            $extra['prodi_jenjang'] = $user->dosenProfile->prodi?->jenjang;
+            $extra['prodi_kode'] = $user->dosenProfile->prodi?->kode_prodi;
+            $extra['fakultas_name'] = $user->dosenProfile->prodi?->fakultas?->nama_fakultas;
+            $extra['fakultas_kode'] = $user->dosenProfile->prodi?->fakultas?->kode_fakultas;
         }
 
         return Inertia::render('Admin/UserShow', [
@@ -113,46 +126,58 @@ class UserController extends Controller
     public function store(Request $request, string $type): RedirectResponse
     {
         $role = $this->role($type);
-        $data = $request->validate($this->rules(null, $role));
+        $data = $request->validate($this->rules(null, $role), $this->messages(), $this->attributes());
+        $label = $this->roleLabel($type);
         try {
             $user = User::create($this->userData($data) + ['role' => $role]);
             $user->profile()->create($this->profileData($data, $role));
         } catch (Throwable) {
-            return to_route('admin.users.'.$type)->with('error', 'User gagal ditambahkan.');
+            return to_route('admin.users.'.$type)->with('error', $label.' gagal ditambahkan.');
         }
 
-        return to_route('admin.users.'.$type)->with('success', 'User berhasil ditambahkan.');
+        return to_route('admin.users.'.$type)->with('success', $label.' berhasil ditambahkan.');
     }
 
     public function update(Request $request, string $type, User $user): RedirectResponse
     {
         $role = $this->role($type);
         abort_unless($user->role === $role, 404);
-        $data = $request->validate($this->rules($user, $role));
+        if (! $request->filled('password')) {
+            $request->merge([
+                'password' => null,
+                'password_confirmation' => null,
+            ]);
+        }
+        $data = $request->validate($this->rules($user, $role), $this->messages(), $this->attributes());
+        if (blank($data['password'] ?? null)) {
+            unset($data['password'], $data['password_confirmation']);
+        }
+        $label = $this->roleLabel($type);
         try {
             DB::transaction(function () use ($user, $data, $role): void {
                 $user->update($this->userData($data));
                 $user->profile()->updateOrCreate([], $this->profileData($data, $role));
             });
         } catch (Throwable) {
-            return to_route('admin.users.'.$type)->with('error', 'User gagal diperbarui.');
+            return to_route('admin.users.'.$type)->with('error', $label.' gagal diperbarui.');
         }
 
-        return to_route('admin.users.'.$type)->with('success', 'User berhasil diperbarui.');
+        return to_route('admin.users.'.$type)->with('success', $label.' berhasil diperbarui.');
     }
 
     public function destroy(string $type, User $user): RedirectResponse
     {
         $role = $this->role($type);
         abort_unless($user->role === $role, 404);
+        $label = $this->roleLabel($type);
 
         try {
             DB::transaction(fn (): ?bool => $user->delete());
         } catch (Throwable) {
-            return to_route('admin.users.'.$type)->with('error', 'User gagal dihapus.');
+            return to_route('admin.users.'.$type)->with('error', $label.' gagal dihapus.');
         }
 
-        return to_route('admin.users.'.$type)->with('success', 'User berhasil dihapus.');
+        return to_route('admin.users.'.$type)->with('success', $label.' berhasil dihapus.');
     }
 
     private function role(string $type): Role
@@ -200,15 +225,105 @@ class UserController extends Controller
             $rules[$field] = ['required', 'string', 'max:1000'];
         }
         $rules['jenis_kelamin'] = ['required', 'in:Laki-laki,Perempuan'];
-        $rules['agama'] = ['required', 'in:Islam,Kristen Protestan,Katolik,Hindu,Buddha,Konghucu'];
+        $rules['agama'] = ['required', 'in:Islam,Kristen Protestan,Kristen Katolik,Hindu,Buddha,Konghucu'];
+        // Karyawan: nomor_induk wajib agar detail tidak tampil "-".
+        if ($role === Role::Admin) {
+            $rules['nomor_induk'] = ['required', 'string', 'max:50', Rule::unique('admin_profiles')->ignore($user?->adminProfile?->id)];
+        }
         if ($role === Role::Dosen) {
             $rules += ['nidn' => ['required', 'string', 'max:50', Rule::unique('dosen_profiles')->ignore($user?->dosenProfile?->id)], 'jabatan_fungsional' => ['required', 'string', 'max:100'], 'pendidikan_terakhir' => ['required', 'string', 'max:100'], 'status_kepegawaian' => ['required', 'string', 'max:100'], 'prodi_id' => ['required', 'exists:program_studis,id']];
         }
         if ($role === Role::Mahasiswa) {
-            $rules += ['nim' => ['nullable', 'string', 'max:50', Rule::unique('mahasiswa_profiles')->ignore($user?->mahasiswaProfile?->id)], 'angkatan' => ['required', 'integer'], 'semester' => ['required', 'integer'], 'status' => ['required', 'in:Aktif,Nonaktif,Lulus,Dropout,Cuti,Mengundurkan Diri,Meninggal,Transfer Masuk'], 'dosen_wali_id' => ['required', 'exists:dosen_profiles,id'], 'prodi_id' => ['required', 'exists:program_studis,id'], 'sekolah_asal' => ['required', 'string', 'max:255'], 'nisn' => ['required', 'string', 'max:50'], 'email_alternatif' => ['required', 'email', 'max:255'], 'nama_ayah_kandung' => ['required', 'string', 'max:255'], 'nama_ibu_kandung' => ['required', 'string', 'max:255'], 'tanggal_lahir_ayah' => ['required', 'date'], 'tanggal_lahir_ibu' => ['required', 'date'], 'pendidikan_terakhir_ayah' => ['required', 'string', 'max:100'], 'pendidikan_terakhir_ibu' => ['required', 'string', 'max:100'], 'pekerjaan_ayah' => ['required', 'string', 'max:100'], 'pekerjaan_ibu' => ['required', 'string', 'max:100'], 'penghasilan_ayah' => ['required', 'string', 'max:100'], 'penghasilan_ibu' => ['required', 'string', 'max:100'], 'no_telepon_ayah' => ['required', 'string', 'max:50'], 'no_telepon_ibu' => ['required', 'string', 'max:50'], 'email_ayah' => ['required', 'email', 'max:255'], 'email_ibu' => ['required', 'email', 'max:255'], 'alamat_ayah' => ['required', 'string', 'max:1000'], 'alamat_ibu' => ['required', 'string', 'max:1000']];
+            $rules += ['nim' => ['nullable', 'string', 'max:50', Rule::unique('mahasiswa_profiles')->ignore($user?->mahasiswaProfile?->id)], 'angkatan' => ['required', 'integer'], 'semester' => ['required', 'integer'], 'status' => ['required', 'in:Aktif,Nonaktif,Lulus,Dropout,Cuti,Mengundurkan Diri,Meninggal,Transfer Masuk'], 'dosen_wali_id' => ['required', 'exists:dosen_profiles,id'], 'prodi_id' => ['required', 'exists:program_studis,id'], 'sekolah_asal' => ['required', 'string', 'max:255'], 'nisn' => ['required', 'integer', Rule::unique('mahasiswa_profiles', 'nisn')->ignore($user?->mahasiswaProfile?->id)], 'email_alternatif' => ['required', 'email', 'max:255', 'different:email', Rule::unique('mahasiswa_profiles', 'email_alternatif')->ignore($user?->mahasiswaProfile?->id)], 'nama_ayah_kandung' => ['required', 'string', 'max:255'], 'nama_ibu_kandung' => ['required', 'string', 'max:255'], 'tanggal_lahir_ayah' => ['required', 'date'], 'tanggal_lahir_ibu' => ['required', 'date'], 'pendidikan_terakhir_ayah' => ['required', 'string', 'max:100'], 'pendidikan_terakhir_ibu' => ['required', 'string', 'max:100'], 'pekerjaan_ayah' => ['required', 'in:'.implode(',', self::PEKERJAAN_OPTIONS)], 'pekerjaan_ibu' => ['required', 'in:'.implode(',', self::PEKERJAAN_OPTIONS)], 'penghasilan_ayah' => ['required', 'in:'.implode(',', self::PENGHASILAN_OPTIONS)], 'penghasilan_ibu' => ['required', 'in:'.implode(',', self::PENGHASILAN_OPTIONS)], 'no_telepon_ayah' => ['required', 'string', 'max:50'], 'no_telepon_ibu' => ['required', 'string', 'max:50'], 'email_ayah' => ['required', 'email', 'max:255'], 'email_ibu' => ['required', 'email', 'max:255'], 'alamat_ayah' => ['required', 'string', 'max:1000'], 'alamat_ibu' => ['required', 'string', 'max:1000']];
         }
         $rules['tanggal_lahir'] = ['required', 'date'];
 
         return $rules;
+    }
+
+    private function roleLabel(string $type): string
+    {
+        return match ($type) {
+            'dosen' => 'Dosen',
+            'mahasiswa' => 'Mahasiswa',
+            'karyawan' => 'Karyawan',
+            default => 'Pengguna',
+        };
+    }
+
+    /**
+     * Pesan validasi Bahasa Indonesia.
+     *
+     * @return array<string, string>
+     */
+    private function messages(): array
+    {
+        return [
+            'required' => ':attribute wajib diisi.',
+            'string' => ':attribute harus berupa teks.',
+            'email' => 'Format :attribute tidak valid.',
+            'unique' => ':attribute sudah digunakan.',
+            'confirmed' => 'Konfirmasi :attribute tidak cocok.',
+            'integer' => ':attribute harus berupa angka.',
+            'date' => 'Format :attribute tidak valid.',
+            'in' => 'Pilihan :attribute tidak valid.',
+            'exists' => ':attribute tidak ditemukan.',
+            'different' => ':attribute tidak boleh sama dengan :other.',
+            'email_alternatif.different' => 'Email Alternatif tidak boleh sama dengan Email utama.',
+            'max.string' => ':attribute maksimal :max karakter.',
+            'min.string' => ':attribute minimal :min karakter.',
+        ];
+    }
+
+    /**
+     * Label atribut Bahasa Indonesia untuk pesan validasi.
+     *
+     * @return array<string, string>
+     */
+    private function attributes(): array
+    {
+        return [
+            'name' => 'Nama',
+            'username' => 'Username',
+            'email' => 'Email',
+            'password' => 'Kata Sandi',
+            'tempat_lahir' => 'Tempat Lahir',
+            'tanggal_lahir' => 'Tanggal Lahir',
+            'jenis_kelamin' => 'Jenis Kelamin',
+            'agama' => 'Agama',
+            'no_telepon' => 'Nomor Telepon',
+            'alamat' => 'Alamat',
+            'kewarganegaraan' => 'Kewarganegaraan',
+            'nomor_induk' => 'Nomor Induk',
+            'nidn' => 'NIDN',
+            'jabatan_fungsional' => 'Jabatan Fungsional',
+            'pendidikan_terakhir' => 'Pendidikan Terakhir',
+            'status_kepegawaian' => 'Status Kepegawaian',
+            'nim' => 'NIM',
+            'angkatan' => 'Angkatan',
+            'semester' => 'Semester',
+            'status' => 'Status',
+            'dosen_wali_id' => 'Dosen Wali',
+            'prodi_id' => 'Program Studi',
+            'sekolah_asal' => 'Sekolah Asal',
+            'nisn' => 'NISN',
+            'email_alternatif' => 'Email Alternatif',
+            'nama_ayah_kandung' => 'Nama Ayah Kandung',
+            'nama_ibu_kandung' => 'Nama Ibu Kandung',
+            'tanggal_lahir_ayah' => 'Tanggal Lahir Ayah',
+            'tanggal_lahir_ibu' => 'Tanggal Lahir Ibu',
+            'pendidikan_terakhir_ayah' => 'Pendidikan Terakhir Ayah',
+            'pendidikan_terakhir_ibu' => 'Pendidikan Terakhir Ibu',
+            'pekerjaan_ayah' => 'Pekerjaan Ayah',
+            'pekerjaan_ibu' => 'Pekerjaan Ibu',
+            'penghasilan_ayah' => 'Penghasilan Ayah',
+            'penghasilan_ibu' => 'Penghasilan Ibu',
+            'no_telepon_ayah' => 'Nomor Telepon Ayah',
+            'no_telepon_ibu' => 'Nomor Telepon Ibu',
+            'email_ayah' => 'Email Ayah',
+            'email_ibu' => 'Email Ibu',
+            'alamat_ayah' => 'Alamat Ayah',
+            'alamat_ibu' => 'Alamat Ibu',
+        ];
     }
 }

@@ -2,7 +2,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { Eye, Pencil, Trash2 } from 'lucide-vue-next';
+import { Eye, Pencil, Search, Trash2 } from 'lucide-vue-next';
+import AlertModal from '@/components/AlertModal.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -14,7 +15,7 @@ type Pagination = { data: User[]; links: { url: string | null; label: string; ac
 const props = defineProps<{ title: string; type: string; users: Pagination; search?: string }>();
 
 const search = ref(props.search ?? '');
-watch(search, (value) => router.get(route(`admin.users.${props.type}`), { search: value }, { preserveState: true, preserveScroll: true }));
+watch(search, (value) => router.get(route(`admin.users.${props.type}`), { search: value }, { preserveState: true, preserveScroll: true, replace: true }));
 
 const searchPlaceholder: Record<string, string> = {
     dosen: 'Cari nama atau NIDN',
@@ -23,71 +24,142 @@ const searchPlaceholder: Record<string, string> = {
 };
 const idLabel: Record<string, string> = { dosen: 'NIDN', mahasiswa: 'NIM', karyawan: 'Nomor Induk' };
 const createLabel: Record<string, string> = { dosen: 'Tambah Dosen', mahasiswa: 'Tambah Mahasiswa' };
+const subtitle: Record<string, string> = {
+    dosen: 'Kelola data dosen dan home base program studi.',
+    mahasiswa: 'Kelola data mahasiswa, dosen wali, dan informasi orang tua.',
+    karyawan: 'Kelola data staf dan nomor induk karyawan.',
+};
 const idValue = (user: User): string => (user.profile?.nidn ?? user.profile?.nim ?? user.profile?.nomor_induk) ?? '-';
 
+const confirmOpen = ref(false);
+const pendingUser = ref<User | null>(null);
+
 const remove = (user: User) => {
-    if (window.confirm(`Hapus user ${user.name}?`)) {
-        router.delete(route(`admin.users.${props.type}.destroy`, user.id));
-    }
+    pendingUser.value = user;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    if (!pendingUser.value) return;
+    router.delete(route(`admin.users.${props.type}.destroy`, pendingUser.value.id), {
+        onFinish: () => {
+            confirmOpen.value = false;
+            pendingUser.value = null;
+        },
+    });
 };
 </script>
 
 <template>
     <Head :title="props.title" />
     <AppLayout :breadcrumbs="[{ title: props.title, href: '#' }]">
-        <div class="flex flex-col gap-4 p-4">
-            <div v-if="page.props.flash?.success" class="rounded border border-green-300 bg-green-50 p-3 text-green-800" role="alert">{{ page.props.flash.success }}</div>
-            <div v-if="page.props.flash?.error" class="rounded border border-red-300 bg-red-50 p-3 text-red-800" role="alert">{{ page.props.flash.error }}</div>
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <h1 class="text-xl font-semibold">{{ props.title }}</h1>
-                <div class="flex items-center gap-2">
-                    <Input v-model="search" :placeholder="searchPlaceholder[props.type]" class="w-64" />
-                    <Link v-if="props.type !== 'karyawan'" :href="route(`admin.users.${props.type}.create`)"><Button>{{ createLabel[props.type] }}</Button></Link>
+        <!-- Notion canvas — warm paper, no clinical white -->
+        <div class="min-h-full bg-[#f6f5f4]">
+            <div class="mx-auto flex w-full max-w-[1000px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+                <!-- Header: title + subtitle on paper -->
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="space-y-1">
+                        <h1 class="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-black">{{ props.title }}</h1>
+                        <p class="text-sm leading-5 text-[#615d59]">{{ subtitle[props.type] ?? '' }}</p>
+                    </div>
+                    <Link v-if="props.type !== 'karyawan'" :href="route(`admin.users.${props.type}.create`)">
+                        <Button class="rounded-full bg-[#0075de] text-white hover:bg-[#005bab]"> {{ createLabel[props.type] }} </Button>
+                    </Link>
                 </div>
+
+                <!-- Controls on paper — search + meta -->
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="relative w-full sm:max-w-sm">
+                        <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#a39e98]" />
+                        <Input v-model="search" :placeholder="searchPlaceholder[props.type]" class="h-9 rounded-[4px] border-[#dddddd] bg-white pl-9 text-[15px] placeholder:text-[#a39e98] focus-visible:ring-1 focus-visible:ring-[#0075de]" />
+                    </div>
+                    <p class="text-sm text-[#615d59]">
+                        <span class="font-medium text-black">{{ props.users.total }}</span> data<span v-if="props.search"> · hasil untuk "{{ props.search }}"</span>
+                    </p>
+                </div>
+
+                <!-- Flash — toast-like, on paper -->
+                <div v-if="page.props.flash?.success" class="rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#1aae39] shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02),0_2.025px_7.847px_rgba(0,0,0,0.027)]" role="alert">
+                    {{ page.props.flash.success }}
+                </div>
+                <div v-if="page.props.flash?.error" class="rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#dd5b00]" role="alert">
+                    {{ page.props.flash.error }}
+                </div>
+
+                <!-- Table as white feature-card on warm canvas -->
+                <div class="overflow-hidden rounded-xl border border-[#e6e6e6] bg-white shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02)]">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b border-[#e6e6e6] bg-[#f6f5f4]">
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">No.</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Nama</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">{{ idLabel[props.type] }}</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Username</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Email</th>
+                                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#e6e6e6]">
+                                <tr v-for="(user, index) in props.users.data" :key="user.username" class="transition-colors hover:bg-[#f6f5f4]/60">
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#615d59]">{{ (props.users.from ?? 0) + index }}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-[15px] font-medium leading-5 text-black">{{ user.name }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ idValue(user) }}</td>
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ user.username }}</td>
+                                    <td class="max-w-[220px] truncate px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ user.email }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex justify-end gap-1.5">
+                                            <Link :href="route(`admin.users.${props.type}.show`, user.id)" title="Lihat Detail" aria-label="Lihat Detail">
+                                                <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#0075de] hover:bg-[#f6f5f4]" aria-hidden="true"><Eye class="size-4" /></Button>
+                                            </Link>
+                                            <Link :href="route(`admin.users.${props.type}.edit`, user.id)" title="Edit" aria-label="Edit">
+                                                <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#2a9d99] hover:bg-[#f6f5f4]" aria-hidden="true"><Pencil class="size-4" /></Button>
+                                            </Link>
+                                            <button type="button" title="Hapus" aria-label="Hapus" @click="remove(user)">
+                                                <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#dd5b00] hover:bg-[#f6f5f4]" aria-hidden="true"><Trash2 class="size-4" /></Button>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="!props.users.data.length">
+                                    <td colspan="6" class="px-4 py-16 text-center">
+                                        <div class="mx-auto max-w-sm rounded-xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] px-6 py-8">
+                                            <p class="text-sm font-medium text-black">Belum ada data</p>
+                                            <p class="mt-1 text-sm leading-5 text-[#615d59]">Data {{ props.type }} akan tampil di sini. Tambahkan data baru untuk memulai.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <AlertModal
+                    :open="confirmOpen"
+                    description="Anda yakin ingin menghapus data ini?"
+                    confirm-text="Ya"
+                    cancel-text="Batal"
+                    @update:open="confirmOpen = $event"
+                    @confirm="confirmDelete"
+                    @cancel="confirmOpen = false"
+                />
+
+                <!-- Pagination — utility buttons on paper -->
+                <nav v-if="props.users.total > 0" class="flex flex-wrap items-center gap-2" aria-label="Pagination">
+                    <Link
+                        v-for="link in props.users.links"
+                        :key="link.label"
+                        :href="link.url ?? '#'"
+                        preserve-scroll
+                        preserve-state
+                        class="rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="link.active ? 'border-[#0075de] bg-[#0075de] text-white' : link.url ? 'border-[#e6e6e6] bg-white text-black hover:bg-[#f6f5f4]' : 'pointer-events-none border-[#e6e6e6] bg-white opacity-40'"
+                        v-html="link.label"
+                    />
+                </nav>
             </div>
-            <div class="overflow-x-auto rounded-lg border">
-                <table class="w-full text-left text-sm">
-                    <thead class="border-b bg-muted/50">
-                        <tr>
-                            <th class="p-3">No.</th>
-                            <th class="p-3">Nama</th>
-                            <th class="p-3">{{ idLabel[props.type] }}</th>
-                            <th class="p-3">Username</th>
-                            <th class="p-3">Email</th>
-                            <th class="p-3">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(user, index) in props.users.data" :key="user.username" class="border-b last:border-0">
-                            <td class="p-3">{{ (props.users.from ?? 0) + index }}</td>
-                            <td class="p-3">{{ user.name }}</td>
-                            <td class="p-3">{{ idValue(user) }}</td>
-                            <td class="p-3">{{ user.username }}</td>
-                            <td class="p-3">{{ user.email }}</td>
-                            <td class="flex gap-2 p-3">
-                                <Link
-                                    v-if="props.type === 'mahasiswa'"
-                                    :href="route(`admin.users.${props.type}.show`, user.id)"
-                                    title="Lihat Detail"
-                                    aria-label="Lihat Detail"
-                                >
-                                    <Button variant="outline" class="size-8 p-0 text-emerald-600 hover:text-emerald-700" aria-hidden="true"><Eye class="size-4" /></Button>
-                                </Link>
-                                <Link :href="route(`admin.users.${props.type}.edit`, user.id)" title="Edit" aria-label="Edit">
-                                    <Button variant="outline" class="size-8 p-0 text-blue-600 hover:text-blue-700" aria-hidden="true"><Pencil class="size-4" /></Button>
-                                </Link>
-                                <button type="button" title="Hapus" aria-label="Hapus" @click="remove(user)">
-                                    <Button variant="outline" class="size-8 p-0 text-red-600 hover:text-red-700" aria-hidden="true"><Trash2 class="size-4" /></Button>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr v-if="!props.users.data.length"><td colspan="6" class="p-3 text-center text-muted-foreground">Belum ada data.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <nav v-if="props.users.total > 0" class="flex flex-wrap gap-2" aria-label="Pagination">
-                <Link v-for="link in props.users.links" :key="link.label" :href="link.url ?? '#'" preserve-scroll preserve-state class="rounded border px-3 py-1 text-sm" :class="{ 'bg-primary text-primary-foreground': link.active, 'pointer-events-none opacity-50': !link.url }" v-html="link.label" />
-            </nav>
         </div>
     </AppLayout>
 </template>

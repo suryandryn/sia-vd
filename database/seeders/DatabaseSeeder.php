@@ -14,12 +14,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $kota = ['Jakarta', 'Bandung', 'Surabaya', 'Yogyakarta', 'Semarang', 'Malang', 'Bogor', 'Depok', 'Tangerang', 'Makassar'];
-        $agama = ['Islam', 'Kristen Protestan', 'Katolik', 'Hindu', 'Buddha'];
+        $agama = ['Islam', 'Kristen Protestan', 'Kristen Katolik', 'Hindu', 'Buddha', 'Konghucu'];
         $jenisKelamin = ['Laki-laki', 'Perempuan'];
         $sekolah = ['SMA Negeri 1 Bandung', 'SMA Negeri 3 Jakarta', 'SMK Negeri 2 Yogyakarta', 'SMA Negeri 5 Surabaya'];
         $pendidikan = ['SD', 'SMP', 'SMA/SMK', 'D3', 'S1', 'S2', 'S3'];
-        $pekerjaan = ['PNS', 'Karyawan Swasta', 'Wiraswasta', 'Petani', 'Guru', 'Dokter', 'TNI/Polri', 'Tidak Bekerja'];
-        $penghasilan = ['< Rp 1.000.000', 'Rp 1.000.000 - Rp 3.000.000', 'Rp 3.000.000 - Rp 5.000.000', 'Rp 5.000.000 - Rp 10.000.000', '> Rp 10.000.000'];
+        $pekerjaan = ['Tidak Bekerja', 'Karyawan Swasta', 'Pegawai Negeri Sipil (PNS)', 'TNI / Polri', 'Wiraswasta / Pengusaha', 'Profesional', 'Guru / Dosen', 'Tenaga Kesehatan', 'Petani', 'Peternak', 'Nelayan', 'Pedagang', 'Ibu Rumah Tangga', 'Freelancer', 'Pensiunan', 'Sudah Meninggal', 'Lainnya'];
+        $penghasilan = ['Kurang dari Rp1.000.000', 'Rp1.000.000 – Rp2.999.999', 'Rp3.000.000 – Rp4.999.999', 'Rp5.000.000 – Rp7.499.999', 'Rp7.500.000 – Rp9.999.999', 'Rp10.000.000 – Rp14.999.999', 'Rp15.000.000 atau lebih', 'Tidak Berpenghasilan'];
 
         $admin = User::updateOrCreate(['username' => 'admin'], [
             'name' => 'Administrator',
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             'role' => Role::Admin,
         ]);
         $admin->adminProfile()->updateOrCreate([], [
-            'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1985-01-10', 'jenis_kelamin' => 'Laki-laki',
+            'nomor_induk' => 'A'.fake()->unique()->numerify('#####'), 'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1985-01-10', 'jenis_kelamin' => 'Laki-laki',
             'agama' => 'Islam', 'no_telepon' => '081234567890', 'alamat' => 'Jl. Merdeka No. 1, Jakarta', 'kewarganegaraan' => 'Indonesia',
         ]);
 
@@ -75,7 +75,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $mahasiswa = User::updateOrCreate(['username' => '33333'], ['name' => 'Citra Maharani', 'email' => '33333@example.com', 'password' => Hash::make('33333'), 'role' => Role::Mahasiswa]);
-        $mahasiswa->mahasiswaProfile()->updateOrCreate([], ['nim' => '33333', 'angkatan' => 2023, 'semester' => 6, 'status' => 'Aktif', 'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '2003-03-03', 'jenis_kelamin' => 'Perempuan', 'agama' => 'Islam', 'no_telepon' => '081333333333', 'alamat' => 'Jl. Mahasiswa No. 33, Jakarta', 'kewarganegaraan' => 'Indonesia', 'dosen_wali_id' => $dosenProfiles[0]->id, 'prodi_id' => $programStudiIds[0], 'sekolah_asal' => $sekolah[0], 'nisn' => '0033333333', 'email_alternatif' => 'citra@gmail.com', 'nama_ayah_kandung' => 'Hendra Maharani', 'nama_ibu_kandung' => 'Lina Maharani', 'tanggal_lahir_ayah' => '1975-05-20', 'tanggal_lahir_ibu' => '1978-08-15', 'pendidikan_terakhir_ayah' => 'S1', 'pendidikan_terakhir_ibu' => 'S1', 'pekerjaan_ayah' => 'PNS', 'pekerjaan_ibu' => 'Guru', 'penghasilan_ayah' => 'Rp 5.000.000 - Rp 10.000.000', 'penghasilan_ibu' => 'Rp 3.000.000 - Rp 5.000.000', 'no_telepon_ayah' => '081333333334', 'no_telepon_ibu' => '081333333335', 'email_ayah' => 'hendra.maharani@example.com', 'email_ibu' => 'lina.maharani@example.com', 'alamat_ayah' => 'Jl. Melati No. 10, Jakarta', 'alamat_ibu' => 'Jl. Melati No. 10, Jakarta']);
+        $mahasiswa->mahasiswaProfile()->updateOrCreate([], ['nim' => '33333', 'angkatan' => 2023, 'semester' => 6, 'status' => 'Aktif', 'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '2003-03-03', 'jenis_kelamin' => 'Perempuan', 'agama' => 'Islam', 'no_telepon' => '081333333333', 'alamat' => 'Jl. Mahasiswa No. 33, Jakarta', 'kewarganegaraan' => 'Indonesia', 'dosen_wali_id' => $dosenProfiles[0]->id, 'prodi_id' => $programStudiIds[0], 'sekolah_asal' => $sekolah[0], 'nisn' => '0033333333', 'email_alternatif' => 'citra@gmail.com', 'nama_ayah_kandung' => 'Hendra Maharani', 'nama_ibu_kandung' => 'Lina Maharani', 'tanggal_lahir_ayah' => '1975-05-20', 'tanggal_lahir_ibu' => '1978-08-15', 'pendidikan_terakhir_ayah' => 'S1', 'pendidikan_terakhir_ibu' => 'S1', 'pekerjaan_ayah' => 'Pegawai Negeri Sipil (PNS)', 'pekerjaan_ibu' => 'Guru / Dosen', 'penghasilan_ayah' => 'Rp5.000.000 – Rp7.499.999', 'penghasilan_ibu' => 'Rp3.000.000 – Rp4.999.999', 'no_telepon_ayah' => '081333333334', 'no_telepon_ibu' => '081333333335', 'email_ayah' => 'hendra.maharani@example.com', 'email_ibu' => 'lina.maharani@example.com', 'alamat_ayah' => 'Jl. Melati No. 10, Jakarta', 'alamat_ibu' => 'Jl. Melati No. 10, Jakarta']);
 
         for ($index = 1; $index <= 100; $index++) {
             $username = 'mahasiswa'.$index;

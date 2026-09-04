@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\DosenProfile;
+use App\Models\ProgramStudi;
 use App\Models\User;
 use App\Role;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -39,13 +41,13 @@ class UserFactory extends Factory
                 $base += [
                     'nim' => fake()->unique()->numerify('########'),
                     'angkatan' => 2024, 'semester' => 2, 'status' => 'Aktif',
-                    'dosen_wali_id' => \App\Models\DosenProfile::query()->inRandomOrder()->value('id'),
-                    'prodi_id' => \App\Models\ProgramStudi::query()->inRandomOrder()->value('id'),
+                    'dosen_wali_id' => DosenProfile::query()->inRandomOrder()->value('id'),
+                    'prodi_id' => ProgramStudi::query()->inRandomOrder()->value('id'),
                     'sekolah_asal' => fake()->company(),
-                    'nisn' => fake()->numerify('##########'),
+                    'nisn' => fake()->unique()->numerify('##########'),
                     'email_alternatif' => fake()->unique()->safeEmail(),
-                    'nama_ayah_kandung' => fake()->name('male'), 'tanggal_lahir_ayah' => fake()->date(), 'pendidikan_terakhir_ayah' => 'S1', 'pekerjaan_ayah' => 'PNS', 'penghasilan_ayah' => '5-10 Juta', 'no_telepon_ayah' => fake()->phoneNumber(), 'email_ayah' => fake()->unique()->safeEmail(), 'alamat_ayah' => fake()->address(),
-                    'nama_ibu_kandung' => fake()->name('female'), 'tanggal_lahir_ibu' => fake()->date(), 'pendidikan_terakhir_ibu' => 'S1', 'pekerjaan_ibu' => 'Guru', 'penghasilan_ibu' => '5-10 Juta', 'no_telepon_ibu' => fake()->phoneNumber(), 'email_ibu' => fake()->unique()->safeEmail(), 'alamat_ibu' => fake()->address(),
+                    'nama_ayah_kandung' => fake()->name('male'), 'tanggal_lahir_ayah' => fake()->date(), 'pendidikan_terakhir_ayah' => 'S1', 'pekerjaan_ayah' => fake()->randomElement(['Tidak Bekerja', 'Karyawan Swasta', 'Pegawai Negeri Sipil (PNS)', 'TNI / Polri', 'Wiraswasta / Pengusaha', 'Profesional', 'Guru / Dosen', 'Tenaga Kesehatan', 'Petani', 'Peternak', 'Nelayan', 'Pedagang', 'Ibu Rumah Tangga', 'Freelancer', 'Pensiunan', 'Sudah Meninggal', 'Lainnya']), 'penghasilan_ayah' => fake()->randomElement(['Kurang dari Rp1.000.000', 'Rp1.000.000 – Rp2.999.999', 'Rp3.000.000 – Rp4.999.999', 'Rp5.000.000 – Rp7.499.999', 'Rp7.500.000 – Rp9.999.999', 'Rp10.000.000 – Rp14.999.999', 'Rp15.000.000 atau lebih', 'Tidak Berpenghasilan']), 'no_telepon_ayah' => fake()->phoneNumber(), 'email_ayah' => fake()->unique()->safeEmail(), 'alamat_ayah' => fake()->address(),
+                    'nama_ibu_kandung' => fake()->name('female'), 'tanggal_lahir_ibu' => fake()->date(), 'pendidikan_terakhir_ibu' => 'S1', 'pekerjaan_ibu' => fake()->randomElement(['Tidak Bekerja', 'Karyawan Swasta', 'Pegawai Negeri Sipil (PNS)', 'TNI / Polri', 'Wiraswasta / Pengusaha', 'Profesional', 'Guru / Dosen', 'Tenaga Kesehatan', 'Petani', 'Peternak', 'Nelayan', 'Pedagang', 'Ibu Rumah Tangga', 'Freelancer', 'Pensiunan', 'Sudah Meninggal', 'Lainnya']), 'penghasilan_ibu' => fake()->randomElement(['Kurang dari Rp1.000.000', 'Rp1.000.000 – Rp2.999.999', 'Rp3.000.000 – Rp4.999.999', 'Rp5.000.000 – Rp7.499.999', 'Rp7.500.000 – Rp9.999.999', 'Rp10.000.000 – Rp14.999.999', 'Rp15.000.000 atau lebih', 'Tidak Berpenghasilan']), 'no_telepon_ibu' => fake()->phoneNumber(), 'email_ibu' => fake()->unique()->safeEmail(), 'alamat_ibu' => fake()->address(),
                 ];
             } elseif ($user->role === Role::Dosen) {
                 $base += ['nidn' => fake()->unique()->numerify('########')];
