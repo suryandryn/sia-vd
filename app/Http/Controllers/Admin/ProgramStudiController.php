@@ -28,6 +28,13 @@ class ProgramStudiController extends Controller
         return Inertia::render('Admin/ProgramStudiForm', ['programStudi' => null, 'fakultas' => Fakultas::orderBy('nama_fakultas')->get(['id', 'nama_fakultas']), 'dosen' => $this->dosen()]);
     }
 
+    public function show(ProgramStudi $programStudi): Response
+    {
+        $programStudi->load(['fakultas.dekan.user:id,name', 'ketuaProgramStudi.user:id,name']);
+
+        return Inertia::render('Admin/ProgramStudiShow', ['programStudi' => $programStudi]);
+    }
+
     public function edit(ProgramStudi $programStudi): Response
     {
         return Inertia::render('Admin/ProgramStudiForm', ['programStudi' => $programStudi, 'fakultas' => Fakultas::orderBy('nama_fakultas')->get(['id', 'nama_fakultas']), 'dosen' => $this->dosen()]);
@@ -65,7 +72,49 @@ class ProgramStudiController extends Controller
 
     private function save(Request $request, ProgramStudi $model): void
     {
-        $data = $request->validate(['fakultas_id' => ['required', 'exists:fakultas,id'], 'kode_prodi' => ['required', 'string', Rule::unique('program_studis')->ignore($model)], 'nama_prodi' => ['required', 'string'], 'jenjang' => ['required', 'string'], 'status_akreditasi' => ['required', 'string'], 'no_sk_akreditasi' => ['nullable', 'string'], 'tanggal_akreditasi_mulai' => ['required', 'date'], 'tanggal_akreditasi_akhir' => ['required', 'date'], 'kaprodi' => ['required', 'exists:dosen_profiles,id'], 'tahun_berdiri' => ['required', 'integer']]);
+        if ($request->input('tanggal_akreditasi_mulai') === '') {
+            $request->merge(['tanggal_akreditasi_mulai' => null]);
+        }
+        if ($request->input('tanggal_akreditasi_akhir') === '') {
+            $request->merge(['tanggal_akreditasi_akhir' => null]);
+        }
+
+        $data = $request->validate(['fakultas_id' => ['required', 'exists:fakultas,id'], 'kode_prodi' => ['required', 'string', Rule::unique('program_studis')->ignore($model)], 'nama_prodi' => ['required', 'string'], 'jenjang' => ['required', 'string'], 'status_akreditasi' => ['required', 'string'], 'no_sk_akreditasi' => ['nullable', 'string'], 'tanggal_akreditasi_mulai' => ['nullable', 'date'], 'tanggal_akreditasi_akhir' => ['nullable', 'date'], 'kaprodi' => ['required', 'exists:dosen_profiles,id'], 'tahun_berdiri' => ['required', 'integer']], $this->messages(), $this->attributes());
         $model->fill($data)->save();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function messages(): array
+    {
+        return [
+            'required' => ':attribute wajib diisi.',
+            'string' => ':attribute harus berupa teks.',
+            'unique' => ':attribute sudah digunakan.',
+            'date' => 'Format :attribute tidak valid.',
+            'integer' => ':attribute harus berupa angka.',
+            'exists' => ':attribute tidak ditemukan.',
+            'max.string' => ':attribute maksimal :max karakter.',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function attributes(): array
+    {
+        return [
+            'fakultas_id' => 'Fakultas',
+            'kode_prodi' => 'Kode Program Studi',
+            'nama_prodi' => 'Nama Program Studi',
+            'jenjang' => 'Jenjang',
+            'status_akreditasi' => 'Status Akreditasi',
+            'no_sk_akreditasi' => 'Nomor SK Akreditasi',
+            'tanggal_akreditasi_mulai' => 'Tanggal Akreditasi Mulai',
+            'tanggal_akreditasi_akhir' => 'Tanggal Akreditasi Akhir',
+            'kaprodi' => 'Kaprodi',
+            'tahun_berdiri' => 'Tahun Berdiri',
+        ];
     }
 }

@@ -27,6 +27,13 @@ class FakultasController extends Controller
         return Inertia::render('Admin/FakultasForm', ['fakultas' => null, 'dosen' => $this->dosen()]);
     }
 
+    public function show(Fakultas $fakulta): Response
+    {
+        $fakulta->load(['dekan.user:id,name', 'programStudis.ketuaProgramStudi.user:id,name']);
+
+        return Inertia::render('Admin/FakultasShow', ['fakultas' => $fakulta]);
+    }
+
     public function edit(Fakultas $fakulta): Response
     {
         return Inertia::render('Admin/FakultasForm', ['fakultas' => $fakulta, 'dosen' => $this->dosen()]);
@@ -64,7 +71,45 @@ class FakultasController extends Controller
 
     private function save(Request $request, Fakultas $fakulta): void
     {
-        $data = $request->validate(['kode_fakultas' => ['required', 'string', Rule::unique('fakultas')->ignore($fakulta)], 'nama_fakultas' => ['required', 'string'], 'dekan_id' => ['required', 'exists:dosen_profiles,id'], 'tanggal_berdiri' => ['required', 'date'], 'no_telp' => ['required', 'string'], 'email' => ['required', 'email']]);
+        $data = $request->validate([
+            'kode_fakultas' => ['required', 'string', Rule::unique('fakultas')->ignore($fakulta)],
+            'nama_fakultas' => ['required', 'string', 'max:255', Rule::unique('fakultas', 'nama_fakultas')->ignore($fakulta->id)],
+            'dekan_id' => ['required', 'exists:dosen_profiles,id'],
+            'tanggal_berdiri' => ['required', 'date'],
+            'no_telp' => ['required', 'string'],
+            'email' => ['required', 'email'],
+        ], $this->messages(), $this->attributes());
         $fakulta->fill($data)->save();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function messages(): array
+    {
+        return [
+            'required' => ':attribute wajib diisi.',
+            'string' => ':attribute harus berupa teks.',
+            'email' => 'Format :attribute tidak valid.',
+            'unique' => ':attribute sudah digunakan.',
+            'date' => 'Format :attribute tidak valid.',
+            'exists' => ':attribute tidak ditemukan.',
+            'max.string' => ':attribute maksimal :max karakter.',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function attributes(): array
+    {
+        return [
+            'kode_fakultas' => 'Kode Fakultas',
+            'nama_fakultas' => 'Nama Fakultas',
+            'dekan_id' => 'Dekan',
+            'tanggal_berdiri' => 'Tanggal Berdiri',
+            'no_telp' => 'Nomor Telepon',
+            'email' => 'Email',
+        ];
     }
 }

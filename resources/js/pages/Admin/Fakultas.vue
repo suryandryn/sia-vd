@@ -5,17 +5,25 @@ import AlertModal from '@/components/AlertModal.vue';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ref, watch } from 'vue';
-import { Pencil, Trash2 } from 'lucide-vue-next';
+import { Eye, Pencil, Search, Trash2 } from 'lucide-vue-next';
 
 const page = usePage<{ flash: { success?: string; error?: string } }>();
 
-type Fakultas = { id: number; kode_fakultas: string; nama_fakultas: string; dekan?: { user?: { name?: string } } | null };
-type Pagination = { data: Fakultas[]; links: { url: string | null; label: string; active: boolean }[]; total: number };
+type Fakultas = {
+    id: number;
+    kode_fakultas: string;
+    nama_fakultas: string;
+    dekan?: { user?: { name?: string } } | null;
+    tanggal_berdiri?: string | null;
+    no_telp?: string | null;
+    email?: string | null;
+};
+type Pagination = { data: Fakultas[]; links: { url: string | null; label: string; active: boolean }[]; total: number; from: number | null };
 
 const props = defineProps<{ fakultas: Pagination; search?: string }>();
 
 const search = ref(props.search ?? '');
-watch(search, (value) => router.get(route('admin.fakultas.index'), { search: value }, { preserveState: true, preserveScroll: true }));
+watch(search, (value) => router.get(route('admin.fakultas.index'), { search: value }, { preserveState: true, preserveScroll: true, replace: true }));
 
 const confirmOpen = ref(false);
 const pendingItem = ref<Fakultas | null>(null);
@@ -39,74 +47,141 @@ const confirmDelete = () => {
 <template>
     <Head title="Fakultas" />
     <AppLayout :breadcrumbs="[{ title: 'Fakultas', href: route('admin.fakultas.index') }]">
-        <div class="flex flex-col gap-4 p-4">
-            <div v-if="page.props.flash?.success" class="rounded border border-green-300 bg-green-50 p-3 text-green-800" role="alert">{{ page.props.flash.success }}</div>
-            <div v-if="page.props.flash?.error" class="rounded border border-red-300 bg-red-50 p-3 text-red-800" role="alert">{{ page.props.flash.error }}</div>
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <h1 class="text-xl font-semibold">Fakultas</h1>
-                <div class="flex items-center gap-2">
-                    <Input v-model="search" placeholder="Cari kode atau nama fakultas" class="w-64" />
-                    <Link :href="route('admin.fakultas.create')"><Button>Tambah Fakultas</Button></Link>
+        <div class="min-h-full bg-[#f6f5f4]">
+            <div class="mx-auto flex w-full max-w-[1000px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+                <!-- Header -->
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="space-y-1">
+                        <h1 class="text-[26px] font-bold leading-[1.23] tracking-[-0.625px] text-black">Fakultas</h1>
+                        <p class="text-sm leading-5 text-[#615d59]">Kelola data fakultas, dekan, dan informasi kontak.</p>
+                    </div>
+                    <Link :href="route('admin.fakultas.create')">
+                        <Button class="rounded-full bg-[#0075de] text-white hover:bg-[#005bab]">Tambah Fakultas</Button>
+                    </Link>
                 </div>
-            </div>
-            <div class="overflow-x-auto rounded-lg border">
-                <table class="w-full text-left text-sm">
-                    <thead class="border-b bg-muted/50">
-                        <tr>
-                            <th class="p-3">Kode Fakultas</th>
-                            <th class="p-3">Nama Fakultas</th>
-                            <th class="p-3">Dekan</th>
-                            <th class="p-3">Tanggal Berdiri</th>
-                            <th class="p-3">Nomor Telepon</th>
-                            <th class="p-3">Email</th>
-                            <th class="p-3">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="item in props.fakultas.data" :key="item.id" class="border-b last:border-0">
-                            <td class="p-3">{{ item.kode_fakultas }}</td>
-                            <td class="p-3">{{ item.nama_fakultas }}</td>
-                            <td class="p-3">{{ item.dekan?.user?.name ?? '-' }}</td>
-                            <td class="p-3">{{ item.tanggal_berdiri ?? '-' }}</td>
-                            <td class="p-3">{{ item.no_telp ?? '-' }}</td>
-                            <td class="p-3">{{ item.email ?? '-' }}</td>
-                            <td class="flex gap-2 p-3">
-                                <Link :href="route('admin.fakultas.edit', item.id)" title="Edit" aria-label="Edit">
-                                    <Button variant="outline" class="size-8 p-0 text-blue-600 hover:text-blue-700" aria-hidden="true"><Pencil class="size-4" /></Button>
-                                </Link>
-                                <button type="button" title="Hapus" aria-label="Hapus" @click="remove(item)">
-                                    <Button variant="outline" class="size-8 p-0 text-red-600 hover:text-red-700" aria-hidden="true"><Trash2 class="size-4" /></Button>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr v-if="!props.fakultas.data.length">
-                            <td colspan="7" class="p-3 text-center text-muted-foreground">Belum ada data.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <AlertModal
-                :open="confirmOpen"
-                description="Anda yakin ingin menghapus data ini?"
-                confirm-text="Ya"
-                cancel-text="Batal"
-                @update:open="confirmOpen = $event"
-                @confirm="confirmDelete"
-                @cancel="confirmOpen = false"
-            />
 
-            <nav v-if="props.fakultas.total > 0" class="flex flex-wrap gap-2" aria-label="Pagination">
-                <Link
-                    v-for="link in props.fakultas.links"
-                    :key="link.label"
-                    :href="link.url ?? '#'"
-                    preserve-scroll
-                    preserve-state
-                    class="rounded border px-3 py-1 text-sm"
-                    :class="{ 'bg-primary text-primary-foreground': link.active, 'pointer-events-none opacity-50': !link.url }"
-                    v-html="link.label"
+                <!-- Controls -->
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="relative w-full sm:max-w-sm">
+                        <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#a39e98]" />
+                        <Input
+                            v-model="search"
+                            placeholder="Cari kode atau nama fakultas"
+                            class="h-9 rounded-[4px] border-[#dddddd] bg-white pl-9 text-[15px] placeholder:text-[#a39e98] focus-visible:ring-1 focus-visible:ring-[#0075de]"
+                        />
+                    </div>
+                    <p class="text-sm text-[#615d59]">
+                        <span class="font-medium text-black">{{ props.fakultas.total }}</span> data<span v-if="props.search"> · hasil untuk "{{ props.search }}"</span>
+                    </p>
+                </div>
+
+                <!-- Flash -->
+                <div
+                    v-if="page.props.flash?.success"
+                    class="rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#1aae39] shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02),0_2.025px_7.847px_rgba(0,0,0,0.027)]"
+                    role="alert"
+                >
+                    {{ page.props.flash.success }}
+                </div>
+                <div v-if="page.props.flash?.error" class="rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#dd5b00]" role="alert">
+                    {{ page.props.flash.error }}
+                </div>
+
+                <!-- Table card -->
+                <div class="overflow-hidden rounded-xl border border-[#e6e6e6] bg-white shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02)]">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b border-[#e6e6e6] bg-[#f6f5f4]">
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">No.</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Kode Fakultas</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Nama Fakultas</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Dekan</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Email</th>
+                                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#e6e6e6]">
+                                <tr v-for="(item, index) in props.fakultas.data" :key="item.id" class="transition-colors hover:bg-[#f6f5f4]/60">
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#615d59]">{{ (props.fakultas.from ?? 0) + index }}</td>
+                                    <td class="px-4 py-3 text-[15px] font-medium leading-5 text-black">{{ item.kode_fakultas }}</td>
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ item.nama_fakultas }}</td>
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ item.dekan?.user?.name ?? '-' }}</td>
+                                    <td class="max-w-[200px] truncate px-4 py-3 text-[15px] leading-5 text-[#31302e]" :title="item.email ?? ''">{{ item.email ?? '-' }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex justify-end gap-1.5">
+                                            <Link :href="route('admin.fakultas.show', item.id)" title="Detail" aria-label="Detail">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#0075de] hover:bg-[#f6f5f4]"
+                                                    aria-hidden="true"
+                                                    ><Eye class="size-4"
+                                                /></Button>
+                                            </Link>
+                                            <Link :href="route('admin.fakultas.edit', item.id)" title="Edit" aria-label="Edit">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#2a9d99] hover:bg-[#f6f5f4]"
+                                                    aria-hidden="true"
+                                                    ><Pencil class="size-4"
+                                                /></Button>
+                                            </Link>
+                                            <button type="button" title="Hapus" aria-label="Hapus" @click="remove(item)">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#dd5b00] hover:bg-[#f6f5f4]"
+                                                    aria-hidden="true"
+                                                    ><Trash2 class="size-4"
+                                                /></Button>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="!props.fakultas.data.length">
+                                    <td colspan="6" class="px-4 py-16 text-center">
+                                        <div class="mx-auto max-w-sm rounded-xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] px-6 py-8">
+                                            <p class="text-sm font-medium text-black">Belum ada data</p>
+                                            <p class="mt-1 text-sm leading-5 text-[#615d59]">Data fakultas akan tampil di sini. Tambahkan fakultas baru untuk memulai.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <AlertModal
+                    :open="confirmOpen"
+                    description="Anda yakin ingin menghapus data ini?"
+                    confirm-text="Ya"
+                    cancel-text="Batal"
+                    @update:open="confirmOpen = $event"
+                    @confirm="confirmDelete"
+                    @cancel="confirmOpen = false"
                 />
-            </nav>
+
+                <nav v-if="props.fakultas.total > 0" class="flex flex-wrap items-center gap-2" aria-label="Pagination">
+                    <Link
+                        v-for="link in props.fakultas.links"
+                        :key="link.label"
+                        :href="link.url ?? '#'"
+                        preserve-scroll
+                        preserve-state
+                        class="rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+                        :class="
+                            link.active
+                                ? 'border-[#0075de] bg-[#0075de] text-white'
+                                : link.url
+                                  ? 'border-[#e6e6e6] bg-white text-black hover:bg-[#f6f5f4]'
+                                  : 'pointer-events-none border-[#e6e6e6] bg-white opacity-40'
+                        "
+                        v-html="link.label"
+                    />
+                </nav>
+            </div>
         </div>
     </AppLayout>
 </template>

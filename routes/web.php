@@ -44,8 +44,8 @@ Route::prefix('admin/users')->middleware(['auth', 'verified', 'role:admin'])->gr
 });
 
 Route::prefix('admin')->middleware(['auth', 'verified', 'role:admin'])->group(function (): void {
-    Route::resource('fakultas', FakultasController::class)->except('show')->parameters(['fakultas' => 'fakulta'])->names('admin.fakultas');
-    Route::resource('program-studi', ProgramStudiController::class)->except('show')->names('admin.program-studi');
+    Route::resource('fakultas', FakultasController::class)->parameters(['fakultas' => 'fakulta'])->names('admin.fakultas');
+    Route::resource('program-studi', ProgramStudiController::class)->names('admin.program-studi');
 });
 
 Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(function () {

@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const props = defineProps<{ id?: string; modelValue: string; placeholder?: string }>();
+const props = withDefaults(defineProps<{ id?: string; modelValue: string; placeholder?: string; required?: boolean }>(), { required: true });
 const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>();
 
 const open = ref(false);
