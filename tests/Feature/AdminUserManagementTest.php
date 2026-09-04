@@ -77,12 +77,13 @@ it('validates required profile fields and new dropdown values', function () {
         'nim' => '11111111', 'angkatan' => 2024, 'semester' => 2, 'status' => 'Aktif',
         'dosen_wali_id' => $dosenWali->dosenProfile->id, 'prodi_id' => $prodi->id, 'sekolah_asal' => 'SMA Negeri 1',
         'nisn' => '1234567890', 'email_alternatif' => 'alt@example.com',
-        'nama_ayah_kandung' => 'Ayah', 'nama_ibu_kandung' => 'Ibu',
+        'nama_ayah_kandung' => 'Ayah', 'tanggal_lahir_ayah' => '1970-05-10', 'pendidikan_terakhir_ayah' => 'S1', 'pekerjaan_ayah' => 'PNS', 'penghasilan_ayah' => '5-10 Juta', 'no_telepon_ayah' => '08111111111', 'email_ayah' => 'ayah@example.com', 'alamat_ayah' => 'Jl. Ayah',
+        'nama_ibu_kandung' => 'Ibu', 'tanggal_lahir_ibu' => '1972-08-12', 'pendidikan_terakhir_ibu' => 'S1', 'pekerjaan_ibu' => 'Guru', 'penghasilan_ibu' => '5-10 Juta', 'no_telepon_ibu' => '08122222222', 'email_ibu' => 'ibu@example.com', 'alamat_ibu' => 'Jl. Ibu',
         'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '2001-03-04', 'jenis_kelamin' => 'Perempuan',
         'agama' => 'Kristen Protestan', 'no_telepon' => '08123456789', 'alamat' => 'Jl. Baru',
         'kewarganegaraan' => 'Indonesia', 'password' => 'password123', 'password_confirmation' => 'password123',
     ];
-    $this->actingAs($admin)->post(route('admin.users.mahasiswa.store'), $mahasiswaPayload)->assertRedirect();
+    $this->actingAs($admin)->post(route('admin.users.mahasiswa.store'), $mahasiswaPayload)->assertRedirect()->assertSessionHas('success', 'User berhasil ditambahkan.');
 
     $existing = User::factory()->create(['role' => Role::Mahasiswa]);
     $existing->profile->update(['nim' => '12345678']);
@@ -94,10 +95,10 @@ it('validates required profile fields and new dropdown values', function () {
     $this->actingAs($admin)->post(route('admin.users.mahasiswa.store'), array_replace($mahasiswaPayload, [
         'nim' => '87654321', 'username' => 'mhs-baru', 'email' => 'mhs@example.com',
         'name' => 'Mahasiswa Baru',
-    ]))->assertRedirect();
+    ]))->assertRedirect()->assertSessionHas('success', 'User berhasil ditambahkan.');
 
     $user = User::where('username', 'mhs-baru')->firstOrFail();
-    expect($user->profile->nim)->toBe('87654321')->and($user->profile->tanggal_lahir->toDateString())->toBe('2001-03-04')->and($user->profile->alamat)->toBe('Jl. Baru');
+    expect($user->profile->nim)->toBe('87654321')->and($user->profile->tanggal_lahir->toDateString())->toBe('2001-03-04')->and($user->profile->alamat)->toBe('Jl. Baru')->and($user->profile->nama_ayah_kandung)->toBe('Ayah')->and($user->profile->nama_ibu_kandung)->toBe('Ibu')->and($user->profile->tanggal_lahir_ayah->toDateString())->toBe('1970-05-10');
 });
 
 it('blocks non-admin users from user management pages', function () {
