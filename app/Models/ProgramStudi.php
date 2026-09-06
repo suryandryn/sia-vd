@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProgramStudi extends Model
 {
@@ -22,5 +23,10 @@ class ProgramStudi extends Model
     public function ketuaProgramStudi(): BelongsTo
     {
         return $this->belongsTo(DosenProfile::class, 'kaprodi');
+    }
+
+    public function mataKuliah(): HasMany
+    {
+        return $this->hasMany(MataKuliah::class, 'prodi_id');
     }
 }

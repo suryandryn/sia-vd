@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, BookMarked, CalendarDays, ClipboardList, FileText, Folder, GraduationCap, LayoutGrid, Library, ListChecks, UserRound, Users } from 'lucide-vue-next';
+import { BookOpen, BookMarked, CalendarDays, ClipboardList, DoorOpen, FileText, Folder, GraduationCap, LayoutGrid, Library, ListChecks, UserRound, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -14,9 +14,10 @@ const page = usePage<SharedData>();
 const navigationByRole: Record<string, NavItem[]> = {
     admin: [
         { title: 'Dashboard Admin', href: '/admin', icon: LayoutGrid },
-        { title: 'Semua Data Sistem', href: '/admin/data', icon: FileText },
         { title: 'Fakultas', href: route('admin.fakultas.index'), icon: GraduationCap },
         { title: 'Program Studi', href: route('admin.program-studi.index'), icon: BookOpen },
+        { title: 'Mata Kuliah', href: route('admin.mata-kuliah.index'), icon: Library },
+        { title: 'Ruang', href: route('admin.ruang.index'), icon: DoorOpen },
         {
             title: 'Manage User',
             href: '/admin/users/dosen',

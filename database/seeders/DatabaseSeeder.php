@@ -3,7 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Fakultas;
+use App\Models\MataKuliah;
 use App\Models\ProgramStudi;
+use App\Models\Ruang;
 use App\Models\User;
 use App\Role;
 use Illuminate\Database\Seeder;
@@ -82,5 +84,51 @@ class DatabaseSeeder extends Seeder
             $user = User::updateOrCreate(['username' => $username], ['name' => ['Fajar', 'Nabila', 'Dimas', 'Putri', 'Bagas'][$index % 5].' '.['Saputra', 'Anggraini', 'Kurniawan', 'Salsabila', 'Ramadhan'][$index % 5], 'email' => $username.'@example.com', 'password' => Hash::make($username), 'role' => Role::Mahasiswa]);
             $user->mahasiswaProfile()->updateOrCreate([], ['nim' => 'M'.str_pad((string) $index, 5, '0', STR_PAD_LEFT), 'angkatan' => 2022 + ($index % 3), 'semester' => 2 + ($index % 8), 'status' => 'Aktif', 'tempat_lahir' => $kota[$index % count($kota)], 'tanggal_lahir' => '200'.($index % 6).'-'.str_pad((string) (($index - 1) % 12 + 1), 2, '0', STR_PAD_LEFT).'-'.str_pad((string) (($index - 1) % 25 + 1), 2, '0', STR_PAD_LEFT), 'jenis_kelamin' => $jenisKelamin[$index % 2], 'agama' => $agama[$index % count($agama)], 'no_telepon' => '0821'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'alamat' => 'Jl. Pelajar No. '.$index.', '.$kota[$index % count($kota)], 'kewarganegaraan' => 'Indonesia', 'dosen_wali_id' => $dosenProfiles[$index % count($dosenProfiles)]->id, 'prodi_id' => $programStudiIds[$index % count($programStudiIds)], 'sekolah_asal' => $sekolah[$index % count($sekolah)], 'nisn' => '00'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'email_alternatif' => $username.'@mail.com', 'nama_ayah_kandung' => 'Joko '.$user->name, 'nama_ibu_kandung' => 'Sari '.$user->name, 'tanggal_lahir_ayah' => '197'.($index % 10).'-'.str_pad((string) (($index - 1) % 12 + 1), 2, '0', STR_PAD_LEFT).'-'.str_pad((string) (($index - 1) % 25 + 1), 2, '0', STR_PAD_LEFT), 'tanggal_lahir_ibu' => '197'.(($index + 3) % 10).'-'.str_pad((string) (($index - 1) % 12 + 1), 2, '0', STR_PAD_LEFT).'-'.str_pad((string) (($index - 1) % 25 + 1), 2, '0', STR_PAD_LEFT), 'pendidikan_terakhir_ayah' => $pendidikan[$index % count($pendidikan)], 'pendidikan_terakhir_ibu' => $pendidikan[($index + 1) % count($pendidikan)], 'pekerjaan_ayah' => $pekerjaan[$index % count($pekerjaan)], 'pekerjaan_ibu' => $pekerjaan[($index + 1) % count($pekerjaan)], 'penghasilan_ayah' => $penghasilan[$index % count($penghasilan)], 'penghasilan_ibu' => $penghasilan[($index + 1) % count($penghasilan)], 'no_telepon_ayah' => '0813'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'no_telepon_ibu' => '0814'.str_pad((string) $index, 8, '0', STR_PAD_LEFT), 'email_ayah' => 'ayah'.$index.'@example.com', 'email_ibu' => 'ibu'.$index.'@example.com', 'alamat_ayah' => 'Jl. Keluarga No. '.$index.', '.$kota[$index % count($kota)], 'alamat_ibu' => 'Jl. Keluarga No. '.$index.', '.$kota[$index % count($kota)]]);
         }
+
+        // Mata kuliah per prodi
+        $mataKuliahSeed = [
+            'TI-S1' => [
+                ['IF101', 'Algoritma dan Pemrograman', 3, 1, 'Wajib'], ['IF102', 'Matematika Diskrit', 3, 1, 'Wajib'], ['IF201', 'Struktur Data', 3, 2, 'Wajib'], ['IF202', 'Basis Data', 3, 2, 'Wajib'], ['IF301', 'Pemrograman Web', 3, 3, 'Wajib'], ['IF302', 'Jaringan Komputer', 3, 3, 'Wajib'], ['IF401', 'Kecerdasan Buatan', 3, 5, 'Pilihan'], ['IF402', 'Keamanan Siber', 3, 6, 'Pilihan'],
+            ],
+            'SI-S1' => [
+                ['SI101', 'Pengantar Sistem Informasi', 3, 1, 'Wajib'], ['SI102', 'Algoritma dan Pemrograman', 3, 1, 'Wajib'], ['SI201', 'Analisis dan Perancangan Sistem', 3, 2, 'Wajib'], ['SI202', 'Basis Data Lanjut', 3, 3, 'Wajib'], ['SI301', 'Manajemen Proyek TI', 3, 4, 'Wajib'], ['SI302', 'E-Bisnis', 3, 5, 'Pilihan'],
+            ],
+            'MNJ-S1' => [
+                ['MN101', 'Pengantar Manajemen', 3, 1, 'Wajib'], ['MN102', 'Ekonomi Mikro', 3, 1, 'Wajib'], ['MN201', 'Manajemen Pemasaran', 3, 3, 'Wajib'], ['MN202', 'Manajemen Keuangan', 3, 4, 'Wajib'], ['MN301', 'Kewirausahaan', 2, 5, 'Pilihan'],
+            ],
+            'AK-S1' => [
+                ['AK101', 'Pengantar Akuntansi', 3, 1, 'Wajib'], ['AK102', 'Matematika Ekonomi', 3, 1, 'Wajib'], ['AK201', 'Akuntansi Keuangan Menengah', 3, 3, 'Wajib'], ['AK202', 'Pajak dan Perpajakan', 3, 4, 'Wajib'], ['AK301', 'Audit Internal', 2, 6, 'Pilihan'],
+            ],
+        ];
+
+        $mataKuliahIds = [];
+        foreach ($mataKuliahSeed as $kodeProdi => $items) {
+            $prodi = ProgramStudi::where('kode_prodi', $kodeProdi)->first();
+            if (! $prodi) {
+                continue;
+            }
+
+            foreach ($items as [$kode, $nama, $sks, $semester, $jenis]) {
+                $mk = MataKuliah::updateOrCreate(['kode_matkul' => $kode], ['nama_matkul' => $nama, 'sks' => $sks, 'semester' => $semester, 'jenis' => $jenis, 'prodi_id' => $prodi->id]);
+                $mataKuliahIds[] = $mk->id;
+            }
+        }
+
+        // Ruang
+        $ruangSeed = [
+            ['R101', 'Ruang Kuliah 101', 40, 'Gedung A Lt.1 - Proyektor & AC'],
+            ['R102', 'Ruang Kuliah 102', 40, 'Gedung A Lt.1 - Proyektor & AC'],
+            ['R201', 'Ruang Kuliah 201', 60, 'Gedung A Lt.2 - Proyektor & AC'],
+            ['LAB1', 'Lab Komputer 1', 30, 'Gedung B Lt.1 - 30 PC'],
+            ['LAB2', 'Lab Komputer 2', 30, 'Gedung B Lt.2 - 30 PC'],
+            ['AUD', 'Aula Utama', 200, 'Gedung C - Sound & Multimedia'],
+        ];
+
+        $ruangIds = [];
+        foreach ($ruangSeed as [$kode, $nama, $kapasitas, $detail]) {
+            $ruang = Ruang::updateOrCreate(['kode_ruang' => $kode], ['nama_ruang' => $nama, 'kapasitas' => $kapasitas, 'detail' => $detail]);
+            $ruangIds[] = $ruang->id;
+        }
+
     }
 }

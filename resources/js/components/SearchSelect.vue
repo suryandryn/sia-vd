@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 
 const props = defineProps<{
     id: string;
-    options: { id: number; name: string }[];
+    options?: { id: number; name: string }[];
+    groups?: { label: string; options: { id: number; name: string }[] }[];
     modelValue: number | string | null;
     placeholder?: string;
     searchPlaceholder?: string;
@@ -18,8 +19,16 @@ const open = ref(false);
 const search = ref('');
 const rootRef = ref<HTMLElement | null>(null);
 
-const filtered = computed(() => props.options.filter((option) => option.name.toLowerCase().includes(search.value.toLowerCase())));
-const selected = computed(() => props.options.find((option) => option.id === Number(props.modelValue)));
+const allOptions = computed(() => (props.groups ? props.groups.flatMap((g) => g.options) : (props.options ?? [])));
+const filtered = computed(() => (props.groups ? [] : (props.options ?? []).filter((option) => option.name.toLowerCase().includes(search.value.toLowerCase()))));
+const filteredGroups = computed(() => {
+    if (!props.groups) return [];
+    const q = search.value.toLowerCase();
+    return props.groups
+        .map((g) => ({ label: g.label, options: g.options.filter((option) => option.name.toLowerCase().includes(q)) }))
+        .filter((g) => g.options.length > 0);
+});
+const selected = computed(() => allOptions.value.find((option) => option.id === Number(props.modelValue)));
 
 const toggle = () => {
     open.value = !open.value;
@@ -73,18 +82,37 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside));
                 autofocus
             />
             <div class="mt-1 max-h-48 overflow-y-auto">
-                <button
-                    v-for="option in filtered"
-                    :key="option.id"
-                    type="button"
-                    class="block w-full rounded-lg px-2 py-2 text-left text-[15px] hover:bg-[#f6f5f4]"
-                    role="option"
-                    :aria-selected="Number(props.modelValue) === option.id"
-                    @click="select(option.id)"
-                >
-                    {{ option.name }}
-                </button>
-                <p v-if="filtered.length === 0" class="px-2 py-2 text-sm text-[#615d59]">Tidak ditemukan</p>
+                <template v-if="props.groups">
+                    <template v-for="group in filteredGroups" :key="group.label">
+                        <p class="px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.06em] text-[#a39e98]">{{ group.label }}</p>
+                        <button
+                            v-for="option in group.options"
+                            :key="option.id"
+                            type="button"
+                            class="block w-full rounded-lg px-2 py-2 text-left text-[15px] hover:bg-[#f6f5f4]"
+                            role="option"
+                            :aria-selected="Number(props.modelValue) === option.id"
+                            @click="select(option.id)"
+                        >
+                            {{ option.name }}
+                        </button>
+                    </template>
+                    <p v-if="filteredGroups.length === 0" class="px-2 py-2 text-sm text-[#615d59]">Tidak ditemukan</p>
+                </template>
+                <template v-else>
+                    <button
+                        v-for="option in filtered"
+                        :key="option.id"
+                        type="button"
+                        class="block w-full rounded-lg px-2 py-2 text-left text-[15px] hover:bg-[#f6f5f4]"
+                        role="option"
+                        :aria-selected="Number(props.modelValue) === option.id"
+                        @click="select(option.id)"
+                    >
+                        {{ option.name }}
+                    </button>
+                    <p v-if="filtered.length === 0" class="px-2 py-2 text-sm text-[#615d59]">Tidak ditemukan</p>
+                </template>
             </div>
         </div>
         <input :value="modelValue ?? ''" type="hidden" :required="required" />

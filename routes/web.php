@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\FakultasController;
+use App\Http\Controllers\Admin\MataKuliahController;
 use App\Http\Controllers\Admin\ProgramStudiController;
+use App\Http\Controllers\Admin\RuangController;
 use App\Http\Controllers\Admin\UserController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -46,6 +48,8 @@ Route::prefix('admin/users')->middleware(['auth', 'verified', 'role:admin'])->gr
 Route::prefix('admin')->middleware(['auth', 'verified', 'role:admin'])->group(function (): void {
     Route::resource('fakultas', FakultasController::class)->parameters(['fakultas' => 'fakulta'])->names('admin.fakultas');
     Route::resource('program-studi', ProgramStudiController::class)->names('admin.program-studi');
+    Route::resource('mata-kuliah', MataKuliahController::class)->parameters(['mata_kuliah' => 'mataKuliah'])->names('admin.mata-kuliah');
+    Route::resource('ruang', RuangController::class)->parameters(['ruang' => 'ruang'])->names('admin.ruang');
 });
 
 Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(function () {
