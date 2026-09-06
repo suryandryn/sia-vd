@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Fakultas;
+use App\Models\KelasKuliah;
 use App\Models\MataKuliah;
 use App\Models\ProgramStudi;
 use App\Models\Ruang;
@@ -130,5 +131,18 @@ class DatabaseSeeder extends Seeder
             $ruangIds[] = $ruang->id;
         }
 
+        // Kelas Kuliah — kode_kelas unik per matkul (A/B/C), round-robin dosen & tahun ajaran
+        $tahunAjaran = ['2024/2025 Ganjil', '2024/2025 Genap', '2025/2026 Ganjil'];
+        foreach ($mataKuliahIds as $index => $matkulId) {
+            $suffix = chr(65 + ($index % 3));
+            $mk = MataKuliah::find($matkulId);
+            $kodeKelas = $mk ? $mk->kode_matkul.'-'.$suffix : 'KK-'.$matkulId.'-'.$suffix;
+            KelasKuliah::updateOrCreate(['kode_kelas' => $kodeKelas], [
+                'tahun_ajaran' => $tahunAjaran[$index % count($tahunAjaran)],
+                'kapasitas' => 30 + ($index % 3) * 10,
+                'dosen_id' => $dosenProfiles[$index % count($dosenProfiles)]->id,
+                'matkul_id' => $matkulId,
+            ]);
+        }
     }
 }

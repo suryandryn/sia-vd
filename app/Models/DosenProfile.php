@@ -29,4 +29,9 @@ class DosenProfile extends Model
     {
         return $this->hasMany(MahasiswaProfile::class, 'dosen_wali_id');
     }
+
+    public function kelasKuliah(): HasMany
+    {
+        return $this->hasMany(KelasKuliah::class, 'dosen_id');
+    }
 }

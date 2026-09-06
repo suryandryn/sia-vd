@@ -18,6 +18,7 @@ const navigationByRole: Record<string, NavItem[]> = {
         { title: 'Program Studi', href: route('admin.program-studi.index'), icon: BookOpen },
         { title: 'Mata Kuliah', href: route('admin.mata-kuliah.index'), icon: Library },
         { title: 'Ruang', href: route('admin.ruang.index'), icon: DoorOpen },
+        { title: 'Kelas Kuliah', href: route('admin.kelas-kuliah.index'), icon: ClipboardList },
         {
             title: 'Manage User',
             href: '/admin/users/dosen',
