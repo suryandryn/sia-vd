@@ -18,7 +18,7 @@ class KelasKuliahController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->toString();
-        $kelasKuliahs = KelasKuliah::with(['dosen.user', 'mataKuliah.prodi'])
+        $kelasKuliahs = KelasKuliah::with(['dosen.user', 'mataKuliah.prodi', 'jadwals.ruang'])
             ->when($search !== '', fn ($query) => $query->where(fn ($q) => $q->where('kode_kelas', 'like', "%{$search}%")->orWhere('tahun_ajaran', 'like', "%{$search}%")->orWhereHas('mataKuliah', fn ($q) => $q->where('kode_matkul', 'like', "%{$search}%")->orWhere('nama_matkul', 'like', "%{$search}%"))))
             ->orderBy('kode_kelas')
             ->paginate(10)
@@ -38,7 +38,7 @@ class KelasKuliahController extends Controller
 
     public function show(KelasKuliah $kelasKuliah): Response
     {
-        $kelasKuliah->load(['dosen.user', 'mataKuliah.prodi.fakultas']);
+        $kelasKuliah->load(['dosen.user', 'mataKuliah.prodi.fakultas', 'jadwals.ruang', 'materis.uploader:id,name']);
 
         return Inertia::render('Admin/KelasKuliahShow', ['kelasKuliah' => $kelasKuliah]);
     }

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\FakultasController;
+use App\Http\Controllers\Admin\JadwalController;
 use App\Http\Controllers\Admin\KelasKuliahController;
 use App\Http\Controllers\Admin\MataKuliahController;
+use App\Http\Controllers\Admin\MateriController;
 use App\Http\Controllers\Admin\ProgramStudiController;
 use App\Http\Controllers\Admin\RuangController;
 use App\Http\Controllers\Admin\UserController;
@@ -52,6 +54,16 @@ Route::prefix('admin')->middleware(['auth', 'verified', 'role:admin'])->group(fu
     Route::resource('mata-kuliah', MataKuliahController::class)->parameters(['mata_kuliah' => 'mataKuliah'])->names('admin.mata-kuliah');
     Route::resource('ruang', RuangController::class)->parameters(['ruang' => 'ruang'])->names('admin.ruang');
     Route::resource('kelas-kuliah', KelasKuliahController::class)->parameters(['kelas_kuliah' => 'kelasKuliah'])->names('admin.kelas-kuliah');
+    Route::get('kelas-kuliah/{kelasKuliah}/jadwal/create', [JadwalController::class, 'create'])->name('admin.kelas-kuliah.jadwal.create');
+    Route::post('kelas-kuliah/{kelasKuliah}/jadwal', [JadwalController::class, 'store'])->name('admin.kelas-kuliah.jadwal.store');
+    Route::get('kelas-kuliah/{kelasKuliah}/jadwal/{jadwal}/edit', [JadwalController::class, 'edit'])->name('admin.kelas-kuliah.jadwal.edit');
+    Route::put('kelas-kuliah/{kelasKuliah}/jadwal/{jadwal}', [JadwalController::class, 'update'])->name('admin.kelas-kuliah.jadwal.update');
+    Route::delete('kelas-kuliah/{kelasKuliah}/jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('admin.kelas-kuliah.jadwal.destroy');
+    Route::get('kelas-kuliah/{kelasKuliah}/materi/create', [MateriController::class, 'create'])->name('admin.kelas-kuliah.materi.create');
+    Route::post('kelas-kuliah/{kelasKuliah}/materi', [MateriController::class, 'store'])->name('admin.kelas-kuliah.materi.store');
+    Route::get('kelas-kuliah/{kelasKuliah}/materi/{materi}/edit', [MateriController::class, 'edit'])->name('admin.kelas-kuliah.materi.edit');
+    Route::put('kelas-kuliah/{kelasKuliah}/materi/{materi}', [MateriController::class, 'update'])->name('admin.kelas-kuliah.materi.update');
+    Route::delete('kelas-kuliah/{kelasKuliah}/materi/{materi}', [MateriController::class, 'destroy'])->name('admin.kelas-kuliah.materi.destroy');
 });
 
 Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(function () {

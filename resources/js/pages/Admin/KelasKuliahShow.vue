@@ -1,7 +1,29 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import AlertModal from '@/components/AlertModal.vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
+import { ref } from 'vue';
+import { Download, Pencil, Plus, Trash2 } from 'lucide-vue-next';
+
+const page = usePage<{ flash: { jadwal_success?: string; jadwal_error?: string; materi_success?: string; materi_error?: string } }>();
+
+type JadwalShow = {
+    id: number;
+    hari: string;
+    jam_mulai: string;
+    jam_akhir: string;
+    ruang?: { kode_ruang: string; nama_ruang: string; kapasitas: number } | null;
+};
+
+type MateriShow = {
+    id: number;
+    judul_materi: string;
+    pertemuan_ke: number;
+    file?: string[] | string | null;
+    catatan?: string | null;
+    uploader?: { name: string } | null;
+};
 
 type KelasKuliahShowProps = {
     id: number;
@@ -11,6 +33,8 @@ type KelasKuliahShowProps = {
     dosen?: { id: number; nidn: string; jabatan_fungsional?: string; user?: { name: string } | null } | null;
     mata_kuliah?: { id: number; kode_matkul: string; nama_matkul: string; sks: number; semester: number; jenis: string; prodi?: { nama_prodi: string; jenjang: string; fakultas?: { nama_fakultas: string } | null } | null } | null;
     mataKuliah?: { id: number; kode_matkul: string; nama_matkul: string; sks: number; semester: number; jenis: string; prodi?: { nama_prodi: string; jenjang: string; fakultas?: { nama_fakultas: string } | null } | null } | null;
+    jadwals?: JadwalShow[];
+    materis?: MateriShow[];
 };
 
 const props = defineProps<{ kelasKuliah: KelasKuliahShowProps }>();
@@ -22,6 +46,59 @@ const v = (val: unknown): string => {
 
 const dosen = () => (props.kelasKuliah as any).dosen ?? null;
 const matkul = () => (props.kelasKuliah as any).mataKuliah ?? (props.kelasKuliah as any).mata_kuliah ?? null;
+const jam = (time: string) => (time ?? '').slice(0, 5);
+
+const confirmOpen = ref(false);
+const pendingJadwal = ref<JadwalShow | null>(null);
+const confirmMateriOpen = ref(false);
+const pendingMateri = ref<MateriShow | null>(null);
+
+const removeJadwal = (jadwal: JadwalShow) => {
+    pendingJadwal.value = jadwal;
+    confirmOpen.value = true;
+};
+
+const confirmDelete = () => {
+    if (!pendingJadwal.value) return;
+    router.delete(route('admin.kelas-kuliah.jadwal.destroy', [props.kelasKuliah.id, pendingJadwal.value.id]), {
+        onFinish: () => {
+            confirmOpen.value = false;
+            pendingJadwal.value = null;
+        },
+    });
+};
+
+const removeMateri = (materi: MateriShow) => {
+    pendingMateri.value = materi;
+    confirmMateriOpen.value = true;
+};
+
+const confirmDeleteMateri = () => {
+    if (!pendingMateri.value) return;
+    router.delete(route('admin.kelas-kuliah.materi.destroy', [props.kelasKuliah.id, pendingMateri.value.id]), {
+        onFinish: () => {
+            confirmMateriOpen.value = false;
+            pendingMateri.value = null;
+        },
+    });
+};
+
+const fileName = (path: string | null | undefined) => (path ?? '').split('/').pop() ?? '-';
+
+const materiFiles = (materi: MateriShow): string[] => {
+    const f = materi.file;
+    if (Array.isArray(f)) return f.filter((v): v is string => typeof v === 'string' && v !== '');
+    if (typeof f === 'string' && f !== '') {
+        try {
+            const d = JSON.parse(f);
+            if (Array.isArray(d)) return d.filter((v): v is string => typeof v === 'string' && v !== '');
+        } catch {
+            return [f];
+        }
+        return [f];
+    }
+    return [];
+};
 </script>
 
 <template>
@@ -109,6 +186,180 @@ const matkul = () => (props.kelasKuliah as any).mataKuliah ?? (props.kelasKuliah
                         </div>
                     </dl>
                 </section>
+
+                <section class="rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02)]">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="space-y-1">
+                            <h2 class="text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Jadwal</h2>
+                            <p class="text-sm leading-5 text-[#615d59]">Hari, jam, dan ruang untuk kelas ini.</p>
+                        </div>
+                        <Link :href="route('admin.kelas-kuliah.jadwal.create', props.kelasKuliah.id)">
+                            <Button class="rounded-full bg-[#0075de] text-white hover:bg-[#005bab]"><Plus class="mr-1 size-4" />Tambah Jadwal</Button>
+                        </Link>
+                    </div>
+
+                    <div
+                        v-if="page.props.flash?.jadwal_success"
+                        class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#1aae39]"
+                        role="alert"
+                    >
+                        {{ page.props.flash.jadwal_success }}
+                    </div>
+                    <div v-if="page.props.flash?.jadwal_error" class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#dd5b00]" role="alert">
+                        {{ page.props.flash.jadwal_error }}
+                    </div>
+
+                    <div class="mt-4 overflow-hidden rounded-xl border border-[#e6e6e6]">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-[#e6e6e6] bg-[#f6f5f4]">
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Hari</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Jam</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Ruang</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e6e6e6]">
+                                    <tr v-for="jadwal in props.kelasKuliah.jadwals ?? []" :key="jadwal.id" class="transition-colors hover:bg-[#f6f5f4]/60">
+                                        <td class="px-4 py-3 text-[15px] font-medium leading-5 text-black">{{ v(jadwal.hari) }}</td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ jam(jadwal.jam_mulai) }}–{{ jam(jadwal.jam_akhir) }}</td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                            <span class="block">{{ v(jadwal.ruang?.kode_ruang) }} — {{ v(jadwal.ruang?.nama_ruang) }}</span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex justify-end gap-1.5">
+                                                <Link :href="route('admin.kelas-kuliah.jadwal.edit', [props.kelasKuliah.id, jadwal.id])" title="Edit" aria-label="Edit">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#2a9d99] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Pencil class="size-4"
+                                                    /></Button>
+                                                </Link>
+                                                <button type="button" title="Hapus" aria-label="Hapus" @click="removeJadwal(jadwal)">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#dd5b00] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Trash2 class="size-4"
+                                                    /></Button>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="!(props.kelasKuliah.jadwals ?? []).length">
+                                        <td colspan="4" class="px-4 py-10 text-center">
+                                            <div class="mx-auto max-w-sm rounded-xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] px-6 py-6">
+                                                <p class="text-sm font-medium text-black">Belum ada jadwal</p>
+                                                <p class="mt-1 text-sm leading-5 text-[#615d59]">Tambahkan hari, jam, dan ruang untuk kelas ini.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02)]">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="space-y-1">
+                            <h2 class="text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Materi</h2>
+                            <p class="text-sm leading-5 text-[#615d59]">Bahan ajar per pertemuan untuk kelas ini.</p>
+                        </div>
+                        <Link :href="route('admin.kelas-kuliah.materi.create', props.kelasKuliah.id)">
+                            <Button class="rounded-full bg-[#0075de] text-white hover:bg-[#005bab]"><Plus class="mr-1 size-4" />Tambah Materi</Button>
+                        </Link>
+                    </div>
+
+                    <div
+                        v-if="page.props.flash?.materi_success"
+                        class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#1aae39]"
+                        role="alert"
+                    >
+                        {{ page.props.flash.materi_success }}
+                    </div>
+                    <div v-if="page.props.flash?.materi_error" class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#dd5b00]" role="alert">
+                        {{ page.props.flash.materi_error }}
+                    </div>
+
+                    <div class="mt-4 overflow-hidden rounded-xl border border-[#e6e6e6]">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-[#e6e6e6] bg-[#f6f5f4]">
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Pertemuan</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Judul Materi</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Berkas</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Diunggah Oleh</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e6e6e6]">
+                                    <tr v-for="materi in props.kelasKuliah.materis ?? []" :key="materi.id" class="transition-colors hover:bg-[#f6f5f4]/60">
+                                        <td class="px-4 py-3 text-[15px] font-medium leading-5 text-black">Pertemuan {{ v(materi.pertemuan_ke) }}</td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                            <span class="block font-medium text-black">{{ v(materi.judul_materi) }}</span>
+                                            <span v-if="materi.catatan" class="mt-0.5 block max-w-md truncate text-sm text-[#615d59]" :title="String(materi.catatan)">{{ materi.catatan }}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                            <ul v-if="materiFiles(materi).length" class="space-y-1">
+                                                <li v-for="path in materiFiles(materi)" :key="path">
+                                                    <a
+                                                        :href="`/storage/${path}`"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                        class="inline-flex items-center gap-1.5 text-[#0075de] hover:underline"
+                                                    >
+                                                        <Download class="size-4" />{{ fileName(path) }}
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                            <span v-else>-</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ v(materi.uploader?.name) }}</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex justify-end gap-1.5">
+                                                <Link :href="route('admin.kelas-kuliah.materi.edit', [props.kelasKuliah.id, materi.id])" title="Edit" aria-label="Edit">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#2a9d99] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Pencil class="size-4"
+                                                    /></Button>
+                                                </Link>
+                                                <button type="button" title="Hapus" aria-label="Hapus" @click="removeMateri(materi)">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#dd5b00] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Trash2 class="size-4"
+                                                    /></Button>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="!(props.kelasKuliah.materis ?? []).length">
+                                        <td colspan="5" class="px-4 py-10 text-center">
+                                            <div class="mx-auto max-w-sm rounded-xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] px-6 py-6">
+                                                <p class="text-sm font-medium text-black">Belum ada materi</p>
+                                                <p class="mt-1 text-sm leading-5 text-[#615d59]">Tambahkan judul, pertemuan, berkas, dan catatan untuk kelas ini.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <AlertModal
+                    :open="confirmOpen"
+                    description="Anda yakin ingin menghapus data ini?"
+                    confirm-text="Ya"
+                    cancel-text="Batal"
+                    @update:open="confirmOpen = $event"
+                    @confirm="confirmDelete"
+                    @cancel="confirmOpen = false"
+                />
+                <AlertModal
+                    :open="confirmMateriOpen"
+                    description="Anda yakin ingin menghapus materi ini?"
+                    confirm-text="Ya"
+                    cancel-text="Batal"
+                    @update:open="confirmMateriOpen = $event"
+                    @confirm="confirmDeleteMateri"
+                    @cancel="confirmMateriOpen = false"
+                />
             </div>
         </div>
     </AppLayout>

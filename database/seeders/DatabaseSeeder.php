@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Fakultas;
+use App\Models\Jadwal;
 use App\Models\KelasKuliah;
 use App\Models\MataKuliah;
 use App\Models\ProgramStudi;
@@ -142,6 +143,20 @@ class DatabaseSeeder extends Seeder
                 'kapasitas' => 30 + ($index % 3) * 10,
                 'dosen_id' => $dosenProfiles[$index % count($dosenProfiles)]->id,
                 'matkul_id' => $matkulId,
+            ]);
+        }
+
+        // Jadwal — Senin..Jumat, jam 07:00/10:00/13:00/16:00, round-robin kelas & ruang
+        $hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+        $slot = [['07:00:00', '09:30:00'], ['10:00:00', '12:30:00'], ['13:00:00', '15:30:00'], ['16:00:00', '18:30:00']];
+        $kelasIds = KelasKuliah::pluck('id')->all();
+        foreach ($kelasIds as $index => $kelasId) {
+            [$mulai, $akhir] = $slot[$index % count($slot)];
+            Jadwal::updateOrCreate(['kelas_id' => $kelasId], [
+                'hari' => $hari[$index % count($hari)],
+                'jam_mulai' => $mulai,
+                'jam_akhir' => $akhir,
+                'ruang_id' => $ruangIds[$index % count($ruangIds)],
             ]);
         }
     }

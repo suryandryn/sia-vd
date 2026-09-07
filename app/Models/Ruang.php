@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ruang extends Model
 {
@@ -15,5 +16,10 @@ class Ruang extends Model
         return [
             'kapasitas' => 'integer',
         ];
+    }
+
+    public function jadwals(): HasMany
+    {
+        return $this->hasMany(Jadwal::class, 'ruang_id');
     }
 }

@@ -9,6 +9,13 @@ import { Eye, Pencil, Search, Trash2 } from 'lucide-vue-next';
 
 const page = usePage<{ flash: { success?: string; error?: string } }>();
 
+type Jadwal = {
+    id: number;
+    hari: string;
+    jam_mulai: string;
+    jam_akhir: string;
+    ruang?: { kode_ruang?: string; nama_ruang?: string } | null;
+};
 type KelasKuliah = {
     id: number;
     kode_kelas: string;
@@ -17,6 +24,7 @@ type KelasKuliah = {
     dosen?: { nidn?: string; user?: { name?: string } | null } | null;
     mata_kuliah?: { kode_matkul?: string; nama_matkul?: string; prodi?: { nama_prodi?: string } | null } | null;
     mataKuliah?: { kode_matkul?: string; nama_matkul?: string; prodi?: { nama_prodi?: string } | null } | null;
+    jadwals?: Jadwal[];
 };
 type Pagination = { data: KelasKuliah[]; links: { url: string | null; label: string; active: boolean }[]; total: number; from: number | null };
 
@@ -46,6 +54,16 @@ const confirmDelete = () => {
 const dosenName = (item: KelasKuliah) => item.dosen?.user?.name ?? '-';
 const dosenNidn = (item: KelasKuliah) => item.dosen?.nidn ?? '';
 const matkul = (item: KelasKuliah) => (item as any).mataKuliah ?? (item as any).mata_kuliah ?? null;
+const jam = (time: string) => time.slice(0, 5);
+const jadwalText = (item: KelasKuliah) => {
+    if (!item.jadwals?.length) return '-';
+    return item.jadwals.map((j) => `${j.hari} ${jam(j.jam_mulai)}–${jam(j.jam_akhir)}`).join(', ');
+};
+const ruangText = (item: KelasKuliah) => {
+    if (!item.jadwals?.length) return '';
+    const codes = [...new Set(item.jadwals.map((j) => j.ruang?.kode_ruang).filter(Boolean))];
+    return codes.join(', ');
+};
 </script>
 
 <template>
@@ -99,6 +117,7 @@ const matkul = (item: KelasKuliah) => (item as any).mataKuliah ?? (item as any).
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Kapasitas</th>
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Dosen</th>
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Mata Kuliah</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Jadwal</th>
                                     <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
                                 </tr>
                             </thead>
@@ -115,6 +134,10 @@ const matkul = (item: KelasKuliah) => (item as any).mataKuliah ?? (item as any).
                                     <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
                                         <span class="block">{{ matkul(item)?.kode_matkul ?? '-' }} — {{ matkul(item)?.nama_matkul ?? '' }}</span>
                                         <span class="block text-xs text-[#a39e98]">{{ matkul(item)?.prodi?.nama_prodi ?? '' }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                        <span class="block">{{ jadwalText(item) }}</span>
+                                        <span class="block text-xs text-[#a39e98]">{{ ruangText(item) }}</span>
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex justify-end gap-1.5">
@@ -137,7 +160,7 @@ const matkul = (item: KelasKuliah) => (item as any).mataKuliah ?? (item as any).
                                     </td>
                                 </tr>
                                 <tr v-if="!props.kelasKuliahs.data.length">
-                                    <td colspan="7" class="px-4 py-16 text-center">
+                                    <td colspan="8" class="px-4 py-16 text-center">
                                         <div class="mx-auto max-w-sm rounded-xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] px-6 py-8">
                                             <p class="text-sm font-medium text-black">Belum ada data</p>
                                             <p class="mt-1 text-sm leading-5 text-[#615d59]">Data kelas kuliah akan tampil di sini. Tambahkan kelas baru untuk memulai.</p>

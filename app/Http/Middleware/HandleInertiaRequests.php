@@ -48,6 +48,10 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn (): ?string => $request->session()->get('success'),
                 'error' => fn (): ?string => $request->session()->get('error'),
+                'materi_success' => fn (): ?string => $request->session()->get('materi_success'),
+                'materi_error' => fn (): ?string => $request->session()->get('materi_error'),
+                'jadwal_success' => fn (): ?string => $request->session()->get('jadwal_success'),
+                'jadwal_error' => fn (): ?string => $request->session()->get('jadwal_error'),
             ],
         ]);
     }
