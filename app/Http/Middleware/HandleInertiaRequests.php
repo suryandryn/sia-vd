@@ -52,6 +52,12 @@ class HandleInertiaRequests extends Middleware
                 'materi_error' => fn (): ?string => $request->session()->get('materi_error'),
                 'jadwal_success' => fn (): ?string => $request->session()->get('jadwal_success'),
                 'jadwal_error' => fn (): ?string => $request->session()->get('jadwal_error'),
+                'tugas_success' => fn (): ?string => $request->session()->get('tugas_success'),
+                'tugas_error' => fn (): ?string => $request->session()->get('tugas_error'),
+                'quiz_success' => fn (): ?string => $request->session()->get('quiz_success'),
+                'quiz_error' => fn (): ?string => $request->session()->get('quiz_error'),
+                'question_success' => fn (): ?string => $request->session()->get('question_success'),
+                'question_error' => fn (): ?string => $request->session()->get('question_error'),
             ],
         ]);
     }

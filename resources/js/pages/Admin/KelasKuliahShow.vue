@@ -4,9 +4,9 @@ import AlertModal from '@/components/AlertModal.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { ref } from 'vue';
-import { Download, Pencil, Plus, Trash2 } from 'lucide-vue-next';
+import { Download, Eye, Pencil, Plus, Trash2 } from 'lucide-vue-next';
 
-const page = usePage<{ flash: { jadwal_success?: string; jadwal_error?: string; materi_success?: string; materi_error?: string } }>();
+const page = usePage<{ flash: { jadwal_success?: string; jadwal_error?: string; materi_success?: string; materi_error?: string; tugas_success?: string; tugas_error?: string; quiz_success?: string; quiz_error?: string } }>();
 
 type JadwalShow = {
     id: number;
@@ -25,6 +25,24 @@ type MateriShow = {
     uploader?: { name: string } | null;
 };
 
+type TugasShow = {
+    id: number;
+    judul_tugas: string;
+    tenggat_waktu?: string | null;
+    file?: string[] | string | null;
+    catatan?: string | null;
+    uploader?: { name: string } | null;
+};
+
+type QuizShow = {
+    id: number;
+    nama_quiz: string;
+    catatan?: string | null;
+    waktu_pengerjaan?: number | null;
+    tenggat_waktu?: string | null;
+    uploader?: { name: string } | null;
+};
+
 type KelasKuliahShowProps = {
     id: number;
     kode_kelas: string;
@@ -35,6 +53,8 @@ type KelasKuliahShowProps = {
     mataKuliah?: { id: number; kode_matkul: string; nama_matkul: string; sks: number; semester: number; jenis: string; prodi?: { nama_prodi: string; jenjang: string; fakultas?: { nama_fakultas: string } | null } | null } | null;
     jadwals?: JadwalShow[];
     materis?: MateriShow[];
+    tugas?: TugasShow[];
+    quizzes?: QuizShow[];
 };
 
 const props = defineProps<{ kelasKuliah: KelasKuliahShowProps }>();
@@ -52,6 +72,10 @@ const confirmOpen = ref(false);
 const pendingJadwal = ref<JadwalShow | null>(null);
 const confirmMateriOpen = ref(false);
 const pendingMateri = ref<MateriShow | null>(null);
+const confirmTugasOpen = ref(false);
+const pendingTugas = ref<TugasShow | null>(null);
+const confirmQuizOpen = ref(false);
+const pendingQuiz = ref<QuizShow | null>(null);
 
 const removeJadwal = (jadwal: JadwalShow) => {
     pendingJadwal.value = jadwal;
@@ -83,6 +107,36 @@ const confirmDeleteMateri = () => {
     });
 };
 
+const removeTugas = (tugas: TugasShow) => {
+    pendingTugas.value = tugas;
+    confirmTugasOpen.value = true;
+};
+
+const confirmDeleteTugas = () => {
+    if (!pendingTugas.value) return;
+    router.delete(route('admin.kelas-kuliah.tugas.destroy', [props.kelasKuliah.id, pendingTugas.value.id]), {
+        onFinish: () => {
+            confirmTugasOpen.value = false;
+            pendingTugas.value = null;
+        },
+    });
+};
+
+const removeQuiz = (quiz: QuizShow) => {
+    pendingQuiz.value = quiz;
+    confirmQuizOpen.value = true;
+};
+
+const confirmDeleteQuiz = () => {
+    if (!pendingQuiz.value) return;
+    router.delete(route('admin.kelas-kuliah.quiz.destroy', [props.kelasKuliah.id, pendingQuiz.value.id]), {
+        onFinish: () => {
+            confirmQuizOpen.value = false;
+            pendingQuiz.value = null;
+        },
+    });
+};
+
 const fileName = (path: string | null | undefined) => (path ?? '').split('/').pop() ?? '-';
 
 const materiFiles = (materi: MateriShow): string[] => {
@@ -98,6 +152,39 @@ const materiFiles = (materi: MateriShow): string[] => {
         return [f];
     }
     return [];
+};
+
+const tugasFiles = (tugas: TugasShow): string[] => {
+    const f = tugas.file;
+    if (Array.isArray(f)) return f.filter((v): v is string => typeof v === 'string' && v !== '');
+    if (typeof f === 'string' && f !== '') {
+        try {
+            const d = JSON.parse(f);
+            if (Array.isArray(d)) return d.filter((v): v is string => typeof v === 'string' && v !== '');
+        } catch {
+            return [f];
+        }
+        return [f];
+    }
+    return [];
+};
+
+const formatTenggat = (value: string | null | undefined): string => {
+    if (!value) return '-';
+
+    const [date, time] = value.replace('T', ' ').split(' ');
+
+    if (!date) return String(value);
+
+    const [year, month, day] = date.split('-');
+    const [hour = '00', minute = '00'] = (time ?? '').split(':');
+
+    const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+
+    return `${day} ${months[Number(month) - 1]} ${year}, ${hour}:${minute}`;
 };
 </script>
 
@@ -342,6 +429,169 @@ const materiFiles = (materi: MateriShow): string[] => {
                     </div>
                 </section>
 
+                <section class="rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02)]">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="space-y-1">
+                            <h2 class="text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Tugas</h2>
+                            <p class="text-sm leading-5 text-[#615d59]">Daftar tugas beserta tenggat waktu untuk kelas ini.</p>
+                        </div>
+                        <Link :href="route('admin.kelas-kuliah.tugas.create', props.kelasKuliah.id)">
+                            <Button class="rounded-full bg-[#0075de] text-white hover:bg-[#005bab]"><Plus class="mr-1 size-4" />Tambah Tugas</Button>
+                        </Link>
+                    </div>
+
+                    <div
+                        v-if="page.props.flash?.tugas_success"
+                        class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#1aae39]"
+                        role="alert"
+                    >
+                        {{ page.props.flash.tugas_success }}
+                    </div>
+                    <div v-if="page.props.flash?.tugas_error" class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#dd5b00]" role="alert">
+                        {{ page.props.flash.tugas_error }}
+                    </div>
+
+                    <div class="mt-4 overflow-hidden rounded-xl border border-[#e6e6e6]">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-[#e6e6e6] bg-[#f6f5f4]">
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Judul Tugas</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Tenggat Waktu</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Berkas</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Diunggah Oleh</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e6e6e6]">
+                                    <tr v-for="tugas in props.kelasKuliah.tugas ?? []" :key="tugas.id" class="transition-colors hover:bg-[#f6f5f4]/60">
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                            <span class="block font-medium text-black">{{ v(tugas.judul_tugas) }}</span>
+                                            <span v-if="tugas.catatan" class="mt-0.5 block max-w-md truncate text-sm text-[#615d59]" :title="String(tugas.catatan)">{{ tugas.catatan }}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ formatTenggat(tugas.tenggat_waktu) }}</td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                            <ul v-if="tugasFiles(tugas).length" class="space-y-1">
+                                                <li v-for="path in tugasFiles(tugas)" :key="path">
+                                                    <a
+                                                        :href="`/storage/${path}`"
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                        class="inline-flex items-center gap-1.5 text-[#0075de] hover:underline"
+                                                    >
+                                                        <Download class="size-4" />{{ fileName(path) }}
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                            <span v-else>-</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ v(tugas.uploader?.name) }}</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex justify-end gap-1.5">
+                                                <Link :href="route('admin.kelas-kuliah.tugas.edit', [props.kelasKuliah.id, tugas.id])" title="Edit" aria-label="Edit">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#2a9d99] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Pencil class="size-4"
+                                                    /></Button>
+                                                </Link>
+                                                <button type="button" title="Hapus" aria-label="Hapus" @click="removeTugas(tugas)">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#dd5b00] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Trash2 class="size-4"
+                                                    /></Button>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="!(props.kelasKuliah.tugas ?? []).length">
+                                        <td colspan="5" class="px-4 py-10 text-center">
+                                            <div class="mx-auto max-w-sm rounded-xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] px-6 py-6">
+                                                <p class="text-sm font-medium text-black">Belum ada tugas</p>
+                                                <p class="mt-1 text-sm leading-5 text-[#615d59]">Tambahkan judul, tenggat waktu, berkas, dan catatan untuk kelas ini.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02)]">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="space-y-1">
+                            <h2 class="text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Quiz</h2>
+                            <p class="text-sm leading-5 text-[#615d59]">Daftar quiz beserta durasi dan tenggat waktu untuk kelas ini.</p>
+                        </div>
+                        <Link :href="route('admin.kelas-kuliah.quiz.create', props.kelasKuliah.id)">
+                            <Button class="rounded-full bg-[#0075de] text-white hover:bg-[#005bab]"><Plus class="mr-1 size-4" />Tambah Quiz</Button>
+                        </Link>
+                    </div>
+
+                    <div
+                        v-if="page.props.flash?.quiz_success"
+                        class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#1aae39]"
+                        role="alert"
+                    >
+                        {{ page.props.flash.quiz_success }}
+                    </div>
+                    <div v-if="page.props.flash?.quiz_error" class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#dd5b00]" role="alert">
+                        {{ page.props.flash.quiz_error }}
+                    </div>
+
+                    <div class="mt-4 overflow-hidden rounded-xl border border-[#e6e6e6]">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-[#e6e6e6] bg-[#f6f5f4]">
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Nama Quiz</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Durasi</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Tenggat Waktu</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Diunggah Oleh</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e6e6e6]">
+                                    <tr v-for="quiz in props.kelasKuliah.quizzes ?? []" :key="quiz.id" class="transition-colors hover:bg-[#f6f5f4]/60">
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                            <span class="block font-medium text-black">{{ v(quiz.nama_quiz) }}</span>
+                                            <span v-if="quiz.catatan" class="mt-0.5 block max-w-md truncate text-sm text-[#615d59]" :title="String(quiz.catatan)">{{ quiz.catatan }}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ quiz.waktu_pengerjaan ? `${quiz.waktu_pengerjaan} menit` : '-' }}</td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ formatTenggat(quiz.tenggat_waktu) }}</td>
+                                        <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ v(quiz.uploader?.name) }}</td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex justify-end gap-1.5">
+                                                <Link :href="route('admin.kelas-kuliah.quiz.show', [props.kelasKuliah.id, quiz.id])" title="Detail" aria-label="Detail">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#0075de] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Eye class="size-4"
+                                                    /></Button>
+                                                </Link>
+                                                <Link :href="route('admin.kelas-kuliah.quiz.edit', [props.kelasKuliah.id, quiz.id])" title="Edit" aria-label="Edit">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#2a9d99] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Pencil class="size-4"
+                                                    /></Button>
+                                                </Link>
+                                                <button type="button" title="Hapus" aria-label="Hapus" @click="removeQuiz(quiz)">
+                                                    <Button variant="outline" size="icon" class="size-8 rounded-full border-[#e6e6e6] bg-white text-[#dd5b00] hover:bg-[#f6f5f4]" aria-hidden="true"
+                                                        ><Trash2 class="size-4"
+                                                    /></Button>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="!(props.kelasKuliah.quizzes ?? []).length">
+                                        <td colspan="5" class="px-4 py-10 text-center">
+                                            <div class="mx-auto max-w-sm rounded-xl border border-dashed border-[#e6e6e6] bg-[#f6f5f4] px-6 py-6">
+                                                <p class="text-sm font-medium text-black">Belum ada quiz</p>
+                                                <p class="mt-1 text-sm leading-5 text-[#615d59]">Tambahkan nama, durasi, tenggat waktu, dan catatan untuk kelas ini.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
                 <AlertModal
                     :open="confirmOpen"
                     description="Anda yakin ingin menghapus data ini?"
@@ -359,6 +609,24 @@ const materiFiles = (materi: MateriShow): string[] => {
                     @update:open="confirmMateriOpen = $event"
                     @confirm="confirmDeleteMateri"
                     @cancel="confirmMateriOpen = false"
+                />
+                <AlertModal
+                    :open="confirmTugasOpen"
+                    description="Anda yakin ingin menghapus tugas ini?"
+                    confirm-text="Ya"
+                    cancel-text="Batal"
+                    @update:open="confirmTugasOpen = $event"
+                    @confirm="confirmDeleteTugas"
+                    @cancel="confirmTugasOpen = false"
+                />
+                <AlertModal
+                    :open="confirmQuizOpen"
+                    description="Anda yakin ingin menghapus quiz ini?"
+                    confirm-text="Ya"
+                    cancel-text="Batal"
+                    @update:open="confirmQuizOpen = $event"
+                    @confirm="confirmDeleteQuiz"
+                    @cancel="confirmQuizOpen = false"
                 />
             </div>
         </div>

@@ -6,7 +6,9 @@ use App\Http\Controllers\Admin\KelasKuliahController;
 use App\Http\Controllers\Admin\MataKuliahController;
 use App\Http\Controllers\Admin\MateriController;
 use App\Http\Controllers\Admin\ProgramStudiController;
+use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\RuangController;
+use App\Http\Controllers\Admin\TugasController;
 use App\Http\Controllers\Admin\UserController;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -64,6 +66,20 @@ Route::prefix('admin')->middleware(['auth', 'verified', 'role:admin'])->group(fu
     Route::get('kelas-kuliah/{kelasKuliah}/materi/{materi}/edit', [MateriController::class, 'edit'])->name('admin.kelas-kuliah.materi.edit');
     Route::put('kelas-kuliah/{kelasKuliah}/materi/{materi}', [MateriController::class, 'update'])->name('admin.kelas-kuliah.materi.update');
     Route::delete('kelas-kuliah/{kelasKuliah}/materi/{materi}', [MateriController::class, 'destroy'])->name('admin.kelas-kuliah.materi.destroy');
+    Route::get('kelas-kuliah/{kelasKuliah}/tugas/create', [TugasController::class, 'create'])->name('admin.kelas-kuliah.tugas.create');
+    Route::post('kelas-kuliah/{kelasKuliah}/tugas', [TugasController::class, 'store'])->name('admin.kelas-kuliah.tugas.store');
+    Route::get('kelas-kuliah/{kelasKuliah}/tugas/{tugas}/edit', [TugasController::class, 'edit'])->name('admin.kelas-kuliah.tugas.edit');
+    Route::put('kelas-kuliah/{kelasKuliah}/tugas/{tugas}', [TugasController::class, 'update'])->name('admin.kelas-kuliah.tugas.update');
+    Route::delete('kelas-kuliah/{kelasKuliah}/tugas/{tugas}', [TugasController::class, 'destroy'])->name('admin.kelas-kuliah.tugas.destroy');
+    Route::get('kelas-kuliah/{kelasKuliah}/quiz/create', [QuizController::class, 'create'])->name('admin.kelas-kuliah.quiz.create');
+    Route::post('kelas-kuliah/{kelasKuliah}/quiz', [QuizController::class, 'store'])->name('admin.kelas-kuliah.quiz.store');
+    Route::get('kelas-kuliah/{kelasKuliah}/quiz/{quiz}', [QuizController::class, 'show'])->name('admin.kelas-kuliah.quiz.show');
+    Route::post('kelas-kuliah/{kelasKuliah}/quiz/{quiz}/questions', [QuizController::class, 'storeQuestions'])->name('admin.kelas-kuliah.quiz.questions.store');
+    Route::put('kelas-kuliah/{kelasKuliah}/quiz/{quiz}/questions/{question}', [QuizController::class, 'updateQuestion'])->name('admin.kelas-kuliah.quiz.questions.update');
+    Route::delete('kelas-kuliah/{kelasKuliah}/quiz/{quiz}/questions/{question}', [QuizController::class, 'destroyQuestion'])->name('admin.kelas-kuliah.quiz.questions.destroy');
+    Route::get('kelas-kuliah/{kelasKuliah}/quiz/{quiz}/edit', [QuizController::class, 'edit'])->name('admin.kelas-kuliah.quiz.edit');
+    Route::put('kelas-kuliah/{kelasKuliah}/quiz/{quiz}', [QuizController::class, 'update'])->name('admin.kelas-kuliah.quiz.update');
+    Route::delete('kelas-kuliah/{kelasKuliah}/quiz/{quiz}', [QuizController::class, 'destroy'])->name('admin.kelas-kuliah.quiz.destroy');
 });
 
 Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(function () {

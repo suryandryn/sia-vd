@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const props = withDefaults(defineProps<{ id?: string; modelValue: string; placeholder?: string; required?: boolean }>(), { required: true });
+const props = withDefaults(defineProps<{ id?: string; modelValue: string; placeholder?: string; required?: boolean; minValue?: string }>(), { required: true });
 const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>();
 
 const open = ref(false);
@@ -24,6 +24,7 @@ const handleSelect = (date: DateValue | undefined) => {
 };
 
 const defaultPlaceholder = today(getLocalTimeZone());
+const minimumDate = computed(() => (props.minValue ? parseDate(props.minValue) : undefined));
 </script>
 
 <template>
@@ -40,7 +41,7 @@ const defaultPlaceholder = today(getLocalTimeZone());
             </Button>
         </PopoverTrigger>
         <PopoverContent class="w-auto p-0" align="start">
-            <Calendar :model-value="selected" :default-placeholder="defaultPlaceholder" locale="id-ID" initial-focus @update:model-value="handleSelect" />
+            <Calendar :model-value="selected" :default-placeholder="defaultPlaceholder" :min-value="minimumDate" locale="id-ID" initial-focus @update:model-value="handleSelect" />
         </PopoverContent>
     </Popover>
 </template>

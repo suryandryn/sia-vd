@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Tugas extends Model
+{
+    protected $table = 'tugas';
+
+    protected $fillable = ['judul_tugas', 'file', 'tenggat_waktu', 'catatan', 'uploaded_by', 'kelas_id'];
+
+    protected function casts(): array
+    {
+        return [
+            'file' => 'array',
+            'tenggat_waktu' => 'datetime',
+        ];
+    }
+
+    public function kelasKuliah(): BelongsTo
+    {
+        return $this->belongsTo(KelasKuliah::class, 'kelas_id');
+    }
+
+    public function uploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
+}

@@ -38,4 +38,14 @@ class KelasKuliah extends Model
     {
         return $this->hasMany(Materi::class, 'kelas_id');
     }
+
+    public function tugas(): HasMany
+    {
+        return $this->hasMany(Tugas::class, 'kelas_id');
+    }
+
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class, 'kelas_id');
+    }
 }
