@@ -9,7 +9,16 @@ import { ref, watch } from 'vue';
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(value));
 
-type Item = { id: number; tahun: string; semester: string; tanggal_mulai: string; tanggal_akhir: string; status: boolean };
+type Item = {
+    id: number;
+    tahun: string;
+    semester: string;
+    tanggal_mulai: string;
+    tanggal_akhir: string;
+    tanggal_krs_awal: string;
+    tanggal_krs_akhir: string;
+    status: boolean;
+};
 const page = usePage<{ flash?: { success?: string; error?: string } }>();
 const props = defineProps<{ tahunAkademiks: { data: Item[]; total: number; from: number | null; links: any[] }; search?: string }>();
 const search = ref(props.search ?? '');
@@ -83,7 +92,8 @@ const confirmDelete = () => {
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">No.</th>
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Tahun</th>
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Semester</th>
-                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Periode</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Periode Kuliah</th>
+                                    <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Periode KRS</th>
                                     <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Status</th>
                                     <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Aksi</th>
                                 </tr>
@@ -96,29 +106,34 @@ const confirmDelete = () => {
                                     <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
                                         {{ formatDate(item.tanggal_mulai) }} — {{ formatDate(item.tanggal_akhir) }}
                                     </td>
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
+                                        {{ formatDate(item.tanggal_krs_awal) }} — {{ formatDate(item.tanggal_krs_akhir) }}
+                                    </td>
                                     <td class="px-4 py-4">
                                         <span
-                                            class="rounded-full px-3 py-1 text-xs font-semibold"
+                                            class="rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap"
                                             :class="item.status ? 'bg-[#eaf8ed] text-[#16852b]' : 'bg-[#f1f1f1] text-[#77736f]'"
                                             >{{ item.status ? 'Aktif' : 'Tidak Aktif' }}</span
                                         >
                                     </td>
-                                    <td class="px-4 py-4 text-right">
-                                        <Link :href="route('admin.tahun-akademik.edit', item.id)"
-                                            ><Button variant="outline" size="icon" class="size-8 rounded-full text-[#2a9d99]" title="Edit"
-                                                ><Pencil class="size-4" /></Button></Link
-                                        ><Button
-                                            variant="outline"
-                                            size="icon"
-                                            class="ml-2 size-8 rounded-full text-[#dd5b00]"
-                                            title="Hapus"
-                                            @click="remove(item)"
-                                            ><Trash2 class="size-4"
-                                        /></Button>
+                                    <td class="px-4 py-4">
+                                        <div class="flex justify-end gap-1.5">
+                                            <Link :href="route('admin.tahun-akademik.edit', item.id)"
+                                                ><Button variant="outline" size="icon" class="size-8 rounded-full text-[#2a9d99]" title="Edit"
+                                                    ><Pencil class="size-4" /></Button></Link
+                                            ><Button
+                                                variant="outline"
+                                                size="icon"
+                                                class="ml-2 size-8 rounded-full text-[#dd5b00]"
+                                                title="Hapus"
+                                                @click="remove(item)"
+                                                ><Trash2 class="size-4"
+                                            /></Button>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr v-if="!props.tahunAkademiks.data.length">
-                                    <td colspan="5" class="px-4 py-16 text-center text-sm text-[#615d59]">Belum ada data tahun akademik.</td>
+                                    <td colspan="7" class="px-4 py-16 text-center text-sm text-[#615d59]">Belum ada data tahun akademik.</td>
                                 </tr>
                             </tbody>
                         </table>

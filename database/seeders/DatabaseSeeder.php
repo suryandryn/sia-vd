@@ -136,7 +136,7 @@ class DatabaseSeeder extends Seeder
         // Kelas Kuliah — kode_kelas unik per matkul (A/B/C), round-robin dosen & tahun ajaran
         $tahunAkademik = [];
         foreach ([['2024/2025', 'Ganjil', '2024-08-01', '2025-01-31'], ['2024/2025', 'Genap', '2025-02-01', '2025-07-31'], ['2025/2026', 'Ganjil', '2025-08-01', '2026-01-31']] as [$tahun, $semester, $tanggalMulai, $tanggalAkhir]) {
-            $akademik = TahunAkademik::updateOrCreate(['tahun' => $tahun, 'semester' => $semester], ['tanggal_mulai' => $tanggalMulai, 'tanggal_akhir' => $tanggalAkhir, 'status' => $tahun === '2025/2026' && $semester === 'Ganjil']);
+            $akademik = TahunAkademik::updateOrCreate(['tahun' => $tahun, 'semester' => $semester], ['tanggal_mulai' => $tanggalMulai, 'tanggal_akhir' => $tanggalAkhir, 'tanggal_krs_awal' => $tanggalMulai, 'tanggal_krs_akhir' => date('Y-m-d', strtotime($tanggalMulai.' +14 days')), 'status' => $tahun === '2025/2026' && $semester === 'Ganjil']);
             $tahunAkademik[] = $akademik->id;
         }
 

@@ -13,6 +13,8 @@ const form = useForm({
     semester: props.tahunAkademik?.semester ?? 'Ganjil',
     tanggal_mulai: props.tahunAkademik?.tanggal_mulai?.slice(0, 10) ?? '',
     tanggal_akhir: props.tahunAkademik?.tanggal_akhir?.slice(0, 10) ?? '',
+    tanggal_krs_awal: props.tahunAkademik?.tanggal_krs_awal?.slice(0, 10) ?? '',
+    tanggal_krs_akhir: props.tahunAkademik?.tanggal_krs_akhir?.slice(0, 10) ?? '',
     status: props.tahunAkademik?.status ?? false,
 });
 const submit = () =>
@@ -57,6 +59,16 @@ const sel =
                             <DatePicker id="tanggal_akhir" v-model="form.tanggal_akhir" placeholder="Pilih tanggal akhir" /><InputError
                                 :message="form.errors.tanggal_akhir"
                             />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="tanggal_krs_awal">Tanggal KRS Awal</Label>
+                            <DatePicker id="tanggal_krs_awal" v-model="form.tanggal_krs_awal" placeholder="Pilih tanggal KRS awal" />
+                            <InputError :message="form.errors.tanggal_krs_awal" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="tanggal_krs_akhir">Tanggal KRS Akhir</Label>
+                            <DatePicker id="tanggal_krs_akhir" v-model="form.tanggal_krs_akhir" placeholder="Pilih tanggal KRS akhir" />
+                            <InputError :message="form.errors.tanggal_krs_akhir" />
                         </div>
                         <div class="grid gap-2 sm:col-span-2">
                             <label class="flex items-center gap-2"><input v-model="form.status" type="checkbox" /> Aktif</label>

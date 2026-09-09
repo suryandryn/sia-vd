@@ -58,11 +58,33 @@ class TahunAkademikController extends Controller
 
     private function save(Request $request, TahunAkademik $model): void
     {
-        $validated = $request->validate([
-            'tahun' => ['required', 'string', 'max:20'], 'semester' => ['required', 'string', 'max:20'],
-            'tanggal_mulai' => ['required', 'date'], 'tanggal_akhir' => ['required', 'date', 'after_or_equal:tanggal_mulai'],
-            'status' => ['boolean'],
-        ]);
+        $validated = $request->validate(
+            [
+                'tahun' => ['required', 'string', 'max:20'],
+                'semester' => ['required', 'string', 'max:20'],
+                'tanggal_mulai' => ['required', 'date'],
+                'tanggal_akhir' => ['required', 'date', 'after_or_equal:tanggal_mulai'],
+                'tanggal_krs_awal' => ['required', 'date'],
+                'tanggal_krs_akhir' => ['required', 'date', 'after_or_equal:tanggal_krs_awal'],
+                'status' => ['boolean'],
+            ],
+            [
+                'required' => ':attribute wajib diisi.',
+                'date' => ':attribute harus berupa tanggal yang valid.',
+                'after_or_equal' => ':attribute harus sama atau setelah :date.',
+                'string' => ':attribute harus berupa teks.',
+                'max' => ':attribute maksimal :max karakter.',
+            ],
+            [
+                'tahun' => 'tahun akademik',
+                'semester' => 'semester',
+                'tanggal_mulai' => 'tanggal mulai',
+                'tanggal_akhir' => 'tanggal akhir',
+                'tanggal_krs_awal' => 'tanggal KRS awal',
+                'tanggal_krs_akhir' => 'tanggal KRS akhir',
+                'status' => 'status',
+            ],
+        );
 
         if (($validated['status'] ?? false) && TahunAkademik::where('status', true)->when($model->exists, fn ($query) => $query->whereKeyNot($model->getKey()))->exists()) {
             throw ValidationException::withMessages([
