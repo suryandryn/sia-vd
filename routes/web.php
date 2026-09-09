@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\RuangController;
 use App\Http\Controllers\Admin\TugasController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Dosen\KelasKuliahController as DosenKelasKuliahController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -86,7 +87,9 @@ Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(fu
     Route::get('/', fn () => Inertia::render('Dashboard'))->name('dosen.dashboard');
     Route::get('profile', fn () => Inertia::render('DosenPlaceholder', ['title' => 'Profile']))->name('dosen.profile');
     Route::get('khs', fn () => Inertia::render('DosenKhs'))->name('dosen.khs');
-    Route::get('jadwal-kuliah', fn () => Inertia::render('DosenPlaceholder', ['title' => 'Jadwal Kuliah']))->name('dosen.jadwal-kuliah');
+    Route::get('kelas-kuliah', [DosenKelasKuliahController::class, 'index'])->name('dosen.kelas-kuliah.index');
+    Route::get('kelas-kuliah/{kelasKuliah}', [DosenKelasKuliahController::class, 'show'])->name('dosen.kelas-kuliah.show');
+    Route::redirect('jadwal-kuliah', '/dosen/kelas-kuliah', 301)->name('dosen.jadwal-kuliah');
     Route::get('tugas', fn () => Inertia::render('DosenPlaceholder', ['title' => 'Tugas']))->name('dosen.tugas');
     Route::get('materi', fn () => Inertia::render('DosenPlaceholder', ['title' => 'Materi']))->name('dosen.materi');
     Route::get('quiz', fn () => Inertia::render('DosenPlaceholder', ['title' => 'Quiz']))->name('dosen.quiz');

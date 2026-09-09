@@ -34,7 +34,7 @@ const navigationByRole: Record<string, NavItem[]> = {
         { title: 'Beranda', href: '/dosen', icon: LayoutGrid },
         { title: 'Profile', href: '/settings/profile', icon: UserRound },
         { title: 'KHS', href: '/dosen/khs', icon: GraduationCap },
-        { title: 'Jadwal Kuliah', href: '/dosen/jadwal', icon: CalendarDays },
+        { title: 'Kelas Kuliah', href: '/dosen/kelas-kuliah', icon: CalendarDays },
         { title: 'Tugas', href: '/dosen/tugas', icon: ClipboardList },
         { title: 'Materi', href: '/dosen/materi', icon: BookOpen },
         { title: 'Quiz', href: '/dosen/quiz', icon: ListChecks },

@@ -41,7 +41,8 @@ it('exposes role menu placeholder routes only to matching role', function () {
     $mahasiswa = User::factory()->create(['role' => Role::Mahasiswa]);
 
     $this->actingAs($dosen)->get(route('dosen.khs'))->assertOk();
-    $this->actingAs($dosen)->get(route('dosen.jadwal-kuliah'))->assertOk();
+    $this->actingAs($dosen)->get(route('dosen.kelas-kuliah.index'))->assertOk();
+    $this->actingAs($dosen)->get(route('dosen.jadwal-kuliah'))->assertRedirect(route('dosen.kelas-kuliah.index', absolute: false));
     $this->actingAs($dosen)->get(route('mahasiswa.khs'))->assertForbidden();
     $this->actingAs($mahasiswa)->get(route('mahasiswa.khs'))->assertOk();
     $this->actingAs($mahasiswa)->get(route('mahasiswa.khs.transkrip-nilai'))->assertOk();
