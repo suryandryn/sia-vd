@@ -137,3 +137,4 @@ const ruangText = (item: KelasKuliah) => {
         </div>
     </AppLayout>
 </template>
+

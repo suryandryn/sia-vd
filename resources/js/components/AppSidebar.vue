@@ -32,7 +32,6 @@ const navigationByRole: Record<string, NavItem[]> = {
     ],
     dosen: [
         { title: 'Beranda', href: '/dosen', icon: LayoutGrid },
-        { title: 'Profile', href: '/settings/profile', icon: UserRound },
         { title: 'KHS', href: '/dosen/khs', icon: GraduationCap },
         { title: 'Kelas Kuliah', href: '/dosen/kelas-kuliah', icon: CalendarDays },
         { title: 'Tugas', href: '/dosen/tugas', icon: ClipboardList },

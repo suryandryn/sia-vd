@@ -47,6 +47,7 @@ class KelasKuliahController extends Controller
 
         return Inertia::render('Dosen/KelasKuliahShow', [
             'kelasKuliah' => $kelasKuliah,
+            'otherClasses' => KelasKuliah::with('mataKuliah')->where('dosen_id', $dosenProfileId)->whereKeyNot($kelasKuliah->id)->orderBy('kode_kelas')->get(),
         ]);
     }
 }
