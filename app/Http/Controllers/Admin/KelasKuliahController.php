@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DosenProfile;
 use App\Models\KelasKuliah;
 use App\Models\MataKuliah;
+use App\Models\TahunAkademik;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,8 +19,8 @@ class KelasKuliahController extends Controller
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->toString();
-        $kelasKuliahs = KelasKuliah::with(['dosen.user', 'mataKuliah.prodi', 'jadwals.ruang'])
-            ->when($search !== '', fn ($query) => $query->where(fn ($q) => $q->where('kode_kelas', 'like', "%{$search}%")->orWhere('tahun_ajaran', 'like', "%{$search}%")->orWhereHas('mataKuliah', fn ($q) => $q->where('kode_matkul', 'like', "%{$search}%")->orWhere('nama_matkul', 'like', "%{$search}%"))))
+        $kelasKuliahs = KelasKuliah::with(['tahunAkademik', 'dosen.user', 'mataKuliah.prodi', 'jadwals.ruang'])
+            ->when($search !== '', fn ($query) => $query->where(fn ($q) => $q->where('kode_kelas', 'like', "%{$search}%")->orWhereHas('tahunAkademik', fn ($q) => $q->where('tahun', 'like', "%{$search}%")->orWhere('semester', 'like', "%{$search}%"))->orWhereHas('mataKuliah', fn ($q) => $q->where('kode_matkul', 'like', "%{$search}%")->orWhere('nama_matkul', 'like', "%{$search}%"))))
             ->orderBy('kode_kelas')
             ->paginate(10)
             ->withQueryString();
@@ -33,12 +34,13 @@ class KelasKuliahController extends Controller
             'kelasKuliah' => null,
             'dosens' => $this->dosens(),
             'matkulGroups' => $this->matkulGroups(),
+            'tahunAkademiks' => TahunAkademik::orderByDesc('tahun')->orderBy('semester')->get(),
         ]);
     }
 
     public function show(KelasKuliah $kelasKuliah): Response
     {
-        $kelasKuliah->load(['dosen.user', 'mataKuliah.prodi.fakultas', 'jadwals.ruang', 'materis.uploader:id,name', 'tugas.uploader:id,name', 'quizzes.uploader:id,name']);
+        $kelasKuliah->load(['tahunAkademik', 'dosen.user', 'mataKuliah.prodi.fakultas', 'jadwals.ruang', 'materis.uploader:id,name', 'tugas.uploader:id,name', 'quizzes.uploader:id,name']);
 
         return Inertia::render('Admin/KelasKuliahShow', ['kelasKuliah' => $kelasKuliah]);
     }
@@ -49,6 +51,7 @@ class KelasKuliahController extends Controller
             'kelasKuliah' => $kelasKuliah,
             'dosens' => $this->dosens(),
             'matkulGroups' => $this->matkulGroups(),
+            'tahunAkademiks' => TahunAkademik::orderByDesc('tahun')->orderBy('semester')->get(),
         ]);
     }
 
@@ -112,7 +115,7 @@ class KelasKuliahController extends Controller
     {
         $data = $request->validate([
             'kode_kelas' => ['required', 'string', 'max:50', Rule::unique('kelas_kuliah', 'kode_kelas')->ignore($model)],
-            'tahun_ajaran' => ['required', 'string', 'max:20'],
+            'tahun_akademik_id' => ['required', 'exists:tahun_akademik,id'],
             'kapasitas' => ['required', 'integer', 'min:1', 'max:500'],
             'dosen_id' => ['required', 'exists:dosen_profiles,id'],
             'matkul_id' => ['required', 'exists:mata_kuliahs,id'],
@@ -144,7 +147,7 @@ class KelasKuliahController extends Controller
     {
         return [
             'kode_kelas' => 'Kode Kelas',
-            'tahun_ajaran' => 'Tahun Ajaran',
+            'tahun_akademik_id' => 'Tahun Akademik',
             'kapasitas' => 'Kapasitas',
             'dosen_id' => 'Dosen',
             'matkul_id' => 'Mata Kuliah',

@@ -46,7 +46,7 @@ type QuizShow = {
 type KelasKuliahShowProps = {
     id: number;
     kode_kelas: string;
-    tahun_ajaran: string;
+    tahunAkademik?: { tahun: string; semester: string } | null;
     kapasitas: number;
     dosen?: { id: number; nidn: string; jabatan_fungsional?: string; user?: { name: string } | null } | null;
     mata_kuliah?: { id: number; kode_matkul: string; nama_matkul: string; sks: number; semester: number; jenis: string; prodi?: { nama_prodi: string; jenjang: string; fakultas?: { nama_fakultas: string } | null } | null } | null;
@@ -213,7 +213,7 @@ const formatTenggat = (value: string | null | undefined): string => {
                         </div>
                         <div class="space-y-1">
                             <dt class="text-xs font-medium uppercase tracking-[0.04em] text-[#a39e98]">Tahun Ajaran</dt>
-                            <dd class="break-words text-[15px] font-medium leading-5 text-black">{{ v(props.kelasKuliah.tahun_ajaran) }}</dd>
+                            <dd class="break-words text-[15px] font-medium leading-5 text-black">{{ props.kelasKuliah.tahunAkademik ? `${props.kelasKuliah.tahunAkademik.tahun} ${props.kelasKuliah.tahunAkademik.semester}` : '-' }}</dd>
                         </div>
                         <div class="space-y-1">
                             <dt class="text-xs font-medium uppercase tracking-[0.04em] text-[#a39e98]">Kapasitas</dt>

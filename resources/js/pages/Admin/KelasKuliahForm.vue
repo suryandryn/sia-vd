@@ -13,6 +13,7 @@ const props = defineProps<{
     kelasKuliah: Record<string, any> | null;
     dosens: { id: number; name: string }[];
     matkulGroups: { label: string; options: { id: number; name: string }[] }[];
+    tahunAkademiks: { id: number; tahun: string; semester: string }[];
 }>();
 
 const title = `${props.kelasKuliah ? 'Edit' : 'Tambah'} Kelas Kuliah`;
@@ -25,6 +26,7 @@ const form = useForm({
     kapasitas: props.kelasKuliah?.kapasitas ?? '',
     dosen_id: props.kelasKuliah?.dosen_id ?? '',
     matkul_id: props.kelasKuliah?.matkul_id ?? '',
+    tahun_akademik_id: props.kelasKuliah?.tahun_akademik_id ?? '',
 });
 
 const submit = () => (props.kelasKuliah ? form.put(route('admin.kelas-kuliah.update', props.kelasKuliah.id)) : form.post(route('admin.kelas-kuliah.store')));
@@ -71,12 +73,12 @@ const sel =
                                 <InputError :message="form.errors.kode_kelas" />
                             </div>
                             <div class="grid gap-2">
-                                <Label for="tahun_ajaran" class="text-sm font-medium text-black">Tahun Ajaran</Label>
-                                <select id="tahun_ajaran" v-model="form.tahun_ajaran" :class="sel" required>
-                                    <option value="">Pilih tahun ajaran</option>
-                                    <option v-for="ta in tahunAjaranOptions" :key="ta" :value="ta">{{ ta }}</option>
+                                <Label for="tahun_akademik_id" class="text-sm font-medium text-black">Tahun Akademik</Label>
+                                <select id="tahun_akademik_id" v-model="form.tahun_akademik_id" :class="sel" required>
+                                    <option value="">Pilih tahun akademik</option>
+                                    <option v-for="ta in props.tahunAkademiks" :key="ta.id" :value="ta.id">{{ ta.tahun }} {{ ta.semester }}</option>
                                 </select>
-                                <InputError :message="form.errors.tahun_ajaran" />
+                                <InputError :message="form.errors.tahun_akademik_id" />
                             </div>
                         </div>
                         <div class="mt-4 grid gap-2 sm:max-w-[240px]">

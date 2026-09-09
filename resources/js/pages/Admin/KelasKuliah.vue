@@ -25,6 +25,7 @@ type KelasKuliah = {
     mata_kuliah?: { kode_matkul?: string; nama_matkul?: string; prodi?: { nama_prodi?: string } | null } | null;
     mataKuliah?: { kode_matkul?: string; nama_matkul?: string; prodi?: { nama_prodi?: string } | null } | null;
     jadwals?: Jadwal[];
+    tahun_akademik?: { tahun?: string; semester?: string } | null;
 };
 type Pagination = { data: KelasKuliah[]; links: { url: string | null; label: string; active: boolean }[]; total: number; from: number | null };
 
@@ -125,7 +126,7 @@ const ruangText = (item: KelasKuliah) => {
                                 <tr v-for="(item, index) in props.kelasKuliahs.data" :key="item.id" class="transition-colors hover:bg-[#f6f5f4]/60">
                                     <td class="px-4 py-3 text-[15px] leading-5 text-[#615d59]">{{ (props.kelasKuliahs.from ?? 0) + index }}</td>
                                     <td class="px-4 py-3 text-[15px] font-medium leading-5 text-black">{{ item.kode_kelas }}</td>
-                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ item.tahun_ajaran }}</td>
+                                    <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">{{ item.tahun_akademik ? `${item.tahun_akademik.tahun} ${item.tahun_akademik.semester}` : '-' }}</td>
                                     <td class="px-4 py-3 text-center text-[15px] leading-5 text-[#31302e]">{{ item.kapasitas }}</td>
                                     <td class="px-4 py-3 text-[15px] leading-5 text-[#31302e]">
                                         <span class="block">{{ dosenName(item) }}</span>

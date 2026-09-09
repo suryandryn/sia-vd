@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\MateriController;
 use App\Http\Controllers\Admin\ProgramStudiController;
 use App\Http\Controllers\Admin\QuizController;
 use App\Http\Controllers\Admin\RuangController;
+use App\Http\Controllers\Admin\TahunAkademikController;
 use App\Http\Controllers\Admin\TugasController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Dosen\KelasKuliahController as DosenKelasKuliahController;
@@ -59,6 +60,7 @@ Route::prefix('admin')->middleware(['auth', 'verified', 'role:admin'])->group(fu
     Route::resource('program-studi', ProgramStudiController::class)->names('admin.program-studi');
     Route::resource('mata-kuliah', MataKuliahController::class)->parameters(['mata_kuliah' => 'mataKuliah'])->names('admin.mata-kuliah');
     Route::resource('ruang', RuangController::class)->parameters(['ruang' => 'ruang'])->names('admin.ruang');
+    Route::resource('tahun-akademik', TahunAkademikController::class)->parameters(['tahun-akademik' => 'tahunAkademik'])->names('admin.tahun-akademik');
     Route::resource('kelas-kuliah', KelasKuliahController::class)->parameters(['kelas_kuliah' => 'kelasKuliah'])->names('admin.kelas-kuliah');
     Route::get('kelas-kuliah/{kelasKuliah}/jadwal/create', [JadwalController::class, 'create'])->name('admin.kelas-kuliah.jadwal.create');
     Route::post('kelas-kuliah/{kelasKuliah}/jadwal', [JadwalController::class, 'store'])->name('admin.kelas-kuliah.jadwal.store');
