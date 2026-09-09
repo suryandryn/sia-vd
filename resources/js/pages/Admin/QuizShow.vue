@@ -278,7 +278,7 @@ const v = (val: unknown): string => {
 };
 
 const duration = (value: number | null | undefined): string => {
-    if (value === null || value === undefined || value === '') return '-';
+    if (value === null || value === undefined) return '-';
     return `${value} menit`;
 };
 

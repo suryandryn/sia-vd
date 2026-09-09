@@ -35,7 +35,7 @@ const update = (nextDate = date.value, nextTime = time.value) => emit('update:mo
         </PopoverTrigger>
         <PopoverContent class="w-auto p-3" align="start">
             <DatePicker :model-value="date" :min-value="props.minDate" :placeholder="props.placeholder" :required="false" @update:model-value="(value) => update(value)" />
-            <Input :model-value="time" type="time" class="mt-3 h-10" @update:model-value="(value) => update(date, value)" />
+            <Input :model-value="time" type="time" class="mt-3 h-10" @update:model-value="(value) => update(date, String(value))" />
             <Button type="button" class="mt-3 w-full" @click="open = false">Selesai</Button>
         </PopoverContent>
     </Popover>
