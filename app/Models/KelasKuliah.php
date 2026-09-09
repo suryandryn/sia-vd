@@ -10,13 +10,18 @@ class KelasKuliah extends Model
 {
     protected $table = 'kelas_kuliah';
 
-    protected $fillable = ['kode_kelas', 'tahun_ajaran', 'kapasitas', 'dosen_id', 'matkul_id'];
+    protected $fillable = ['kode_kelas', 'tahun_akademik_id', 'kapasitas', 'dosen_id', 'matkul_id'];
 
     protected function casts(): array
     {
         return [
             'kapasitas' => 'integer',
         ];
+    }
+
+    public function tahunAkademik(): BelongsTo
+    {
+        return $this->belongsTo(TahunAkademik::class, 'tahun_akademik_id');
     }
 
     public function dosen(): BelongsTo

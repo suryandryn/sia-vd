@@ -8,6 +8,7 @@ use App\Models\KelasKuliah;
 use App\Models\MataKuliah;
 use App\Models\ProgramStudi;
 use App\Models\Ruang;
+use App\Models\TahunAkademik;
 use App\Models\User;
 use App\Role;
 use Illuminate\Database\Seeder;
@@ -133,13 +134,18 @@ class DatabaseSeeder extends Seeder
         }
 
         // Kelas Kuliah — kode_kelas unik per matkul (A/B/C), round-robin dosen & tahun ajaran
-        $tahunAjaran = ['2024/2025 Ganjil', '2024/2025 Genap', '2025/2026 Ganjil'];
+        $tahunAkademik = [];
+        foreach ([['2024/2025', 'Ganjil', '2024-08-01', '2025-01-31'], ['2024/2025', 'Genap', '2025-02-01', '2025-07-31'], ['2025/2026', 'Ganjil', '2025-08-01', '2026-01-31']] as [$tahun, $semester, $tanggalMulai, $tanggalAkhir]) {
+            $akademik = TahunAkademik::updateOrCreate(['tahun' => $tahun, 'semester' => $semester], ['tanggal_mulai' => $tanggalMulai, 'tanggal_akhir' => $tanggalAkhir, 'status' => $tahun === '2025/2026' && $semester === 'Ganjil']);
+            $tahunAkademik[] = $akademik->id;
+        }
+
         foreach ($mataKuliahIds as $index => $matkulId) {
             $suffix = chr(65 + ($index % 3));
             $mk = MataKuliah::find($matkulId);
             $kodeKelas = $mk ? $mk->kode_matkul.'-'.$suffix : 'KK-'.$matkulId.'-'.$suffix;
             KelasKuliah::updateOrCreate(['kode_kelas' => $kodeKelas], [
-                'tahun_ajaran' => $tahunAjaran[$index % count($tahunAjaran)],
+                'tahun_akademik_id' => $tahunAkademik[$index % count($tahunAkademik)],
                 'kapasitas' => 30 + ($index % 3) * 10,
                 'dosen_id' => $dosenProfiles[$index % count($dosenProfiles)]->id,
                 'matkul_id' => $matkulId,
