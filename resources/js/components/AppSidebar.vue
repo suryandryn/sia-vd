@@ -41,8 +41,7 @@ const navigationByRole: Record<string, NavItem[]> = {
     ],
     mahasiswa: [
         { title: 'Beranda', href: '/mahasiswa', icon: LayoutGrid },
-        { title: 'Profile', href: '/settings/profile', icon: UserRound },
-        { title: 'KHS', href: '/mahasiswa/khs', icon: GraduationCap, items: [{ title: 'KHS', href: '/mahasiswa/khs' }, { title: 'Transkrip Nilai', href: '/mahasiswa/transkrip' }] },
+        { title: 'Rencana dan Hasil Studi', href: '/mahasiswa/krs', icon: GraduationCap, items: [{ title: 'Rencana Studi (KRS)', href: '/mahasiswa/krs' }, { title: 'Kartu Hasil Studi', href: '/mahasiswa/khs' }, { title: 'Transkrip Nilai', href: '/mahasiswa/transkrip' }] },
         { title: 'Jadwal Kuliah', href: '/mahasiswa/jadwal', icon: CalendarDays },
         { title: 'Tugas', href: '/mahasiswa/tugas', icon: ClipboardList },
         { title: 'Materi', href: '/mahasiswa/materi', icon: BookOpen },

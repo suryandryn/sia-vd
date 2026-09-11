@@ -15,6 +15,7 @@ use App\Http\Controllers\Dosen\KelasKuliahController as DosenKelasKuliahControll
 use App\Http\Controllers\Dosen\MateriController as DosenMateriController;
 use App\Http\Controllers\Dosen\QuizController as DosenQuizController;
 use App\Http\Controllers\Dosen\TugasController as DosenTugasController;
+use App\Http\Controllers\Mahasiswa\KrsController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -124,9 +125,12 @@ Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(fu
 
 Route::prefix('mahasiswa')->middleware(['auth', 'verified', 'role:mahasiswa'])->group(function () {
     Route::get('/', fn () => Inertia::render('Dashboard'))->name('mahasiswa.dashboard');
+    Route::get('krs', [KrsController::class, 'index'])->name('mahasiswa.krs');
+    Route::post('krs/{kelasKuliah}', [KrsController::class, 'store'])->name('mahasiswa.krs.store');
+
     foreach ([
         'profile' => 'Profile', 'jadwal-kuliah' => 'Jadwal Kuliah', 'info-perkuliahan' => 'Info Perkuliahan',
-        'tugas' => 'Tugas', 'materi' => 'Materi', 'quiz' => 'Quiz', 'krs' => 'KRS',
+        'tugas' => 'Tugas', 'materi' => 'Materi', 'quiz' => 'Quiz',
         'khs' => 'KHS', 'pendaftaran-wisuda' => 'Pendaftaran Wisuda', 'perpustakaan' => 'Perpustakaan',
         'info-biaya-kuliah' => 'Info Biaya Kuliah', 'khs/transkrip-nilai' => 'Transkrip Nilai',
         'perpustakaan/pinjaman-aktif' => 'Pinjaman Aktif', 'perpustakaan/riwayat-pinjaman' => 'Riwayat Pinjaman',

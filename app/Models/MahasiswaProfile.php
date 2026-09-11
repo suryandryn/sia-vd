@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MahasiswaProfile extends Model
 {
@@ -27,5 +28,10 @@ class MahasiswaProfile extends Model
     public function prodi(): BelongsTo
     {
         return $this->belongsTo(ProgramStudi::class, 'prodi_id');
+    }
+
+    public function krs(): HasMany
+    {
+        return $this->hasMany(Krs::class, 'mahasiswa_id');
     }
 }

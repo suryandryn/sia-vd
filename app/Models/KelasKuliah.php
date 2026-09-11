@@ -53,4 +53,9 @@ class KelasKuliah extends Model
     {
         return $this->hasMany(Quiz::class, 'kelas_id');
     }
+
+    public function krs(): HasMany
+    {
+        return $this->hasMany(Krs::class, 'kelas_id');
+    }
 }
