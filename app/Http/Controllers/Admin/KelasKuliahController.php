@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DosenProfile;
 use App\Models\KelasKuliah;
+use App\Models\Krs;
 use App\Models\MataKuliah;
 use App\Models\TahunAkademik;
 use Illuminate\Http\RedirectResponse;
@@ -40,9 +41,17 @@ class KelasKuliahController extends Controller
 
     public function show(KelasKuliah $kelasKuliah): Response
     {
-        $kelasKuliah->load(['tahunAkademik', 'dosen.user', 'mataKuliah.prodi.fakultas', 'jadwals.ruang', 'materis.uploader:id,name', 'tugas.uploader:id,name', 'quizzes.uploader:id,name']);
+        $kelasKuliah->load(['tahunAkademik', 'dosen.user', 'mataKuliah.prodi.fakultas', 'jadwals.ruang', 'materis.uploader:id,name', 'tugas.uploader:id,name', 'quizzes.uploader:id,name', 'krs.mahasiswa.user', 'krs.mahasiswa.prodi']);
 
         return Inertia::render('Admin/KelasKuliahShow', ['kelasKuliah' => $kelasKuliah]);
+    }
+
+    public function updateGrade(Request $request, KelasKuliah $kelasKuliah, Krs $krs): RedirectResponse
+    {
+        abort_if($krs->kelas_id !== $kelasKuliah->id, 404);
+        $krs->update($request->validate(['nilai' => ['required', Rule::in(['A', 'B', 'C', 'D', 'E'])]]));
+
+        return back()->with('success', 'Nilai berhasil diperbarui.');
     }
 
     public function edit(KelasKuliah $kelasKuliah): Response

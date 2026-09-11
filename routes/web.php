@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\TahunAkademikController;
 use App\Http\Controllers\Admin\TugasController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Dosen\KelasKuliahController as DosenKelasKuliahController;
+use App\Http\Controllers\Dosen\MahasiswaKelasController;
 use App\Http\Controllers\Dosen\MateriController as DosenMateriController;
 use App\Http\Controllers\Dosen\QuizController as DosenQuizController;
 use App\Http\Controllers\Dosen\TugasController as DosenTugasController;
@@ -63,6 +64,7 @@ Route::prefix('admin')->middleware(['auth', 'verified', 'role:admin'])->group(fu
     Route::resource('ruang', RuangController::class)->parameters(['ruang' => 'ruang'])->names('admin.ruang');
     Route::resource('tahun-akademik', TahunAkademikController::class)->parameters(['tahun-akademik' => 'tahunAkademik'])->names('admin.tahun-akademik');
     Route::resource('kelas-kuliah', KelasKuliahController::class)->parameters(['kelas_kuliah' => 'kelasKuliah'])->names('admin.kelas-kuliah');
+    Route::put('kelas-kuliah/{kelasKuliah}/krs/{krs}/nilai', [KelasKuliahController::class, 'updateGrade'])->name('admin.kelas-kuliah.krs.nilai');
     Route::get('kelas-kuliah/{kelasKuliah}/jadwal/create', [JadwalController::class, 'create'])->name('admin.kelas-kuliah.jadwal.create');
     Route::post('kelas-kuliah/{kelasKuliah}/jadwal', [JadwalController::class, 'store'])->name('admin.kelas-kuliah.jadwal.store');
     Route::get('kelas-kuliah/{kelasKuliah}/jadwal/{jadwal}/edit', [JadwalController::class, 'edit'])->name('admin.kelas-kuliah.jadwal.edit');
@@ -94,7 +96,9 @@ Route::prefix('dosen')->middleware(['auth', 'verified', 'role:dosen'])->group(fu
     Route::get('profile', fn () => Inertia::render('DosenPlaceholder', ['title' => 'Profile']))->name('dosen.profile');
     Route::get('khs', fn () => Inertia::render('DosenKhs'))->name('dosen.khs');
     Route::get('kelas-kuliah', [DosenKelasKuliahController::class, 'index'])->name('dosen.kelas-kuliah.index');
+    Route::get('mahasiswa-kelas', [MahasiswaKelasController::class, 'index'])->name('dosen.mahasiswa-kelas');
     Route::get('kelas-kuliah/{kelasKuliah}', [DosenKelasKuliahController::class, 'show'])->name('dosen.kelas-kuliah.show');
+    Route::put('kelas-kuliah/{kelasKuliah}/krs/{krs}/nilai', [DosenKelasKuliahController::class, 'updateGrade'])->name('dosen.kelas-kuliah.krs.nilai');
     Route::get('kelas-kuliah/{kelasKuliah}/materi/create', [DosenMateriController::class, 'create'])->name('dosen.kelas-kuliah.materi.create');
     Route::post('kelas-kuliah/{kelasKuliah}/materi', [DosenMateriController::class, 'store'])->name('dosen.kelas-kuliah.materi.store');
     Route::get('kelas-kuliah/{kelasKuliah}/materi/{materi}/edit', [DosenMateriController::class, 'edit'])->name('dosen.kelas-kuliah.materi.edit');

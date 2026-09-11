@@ -35,6 +35,7 @@ const navigationByRole: Record<string, NavItem[]> = {
         { title: 'Beranda', href: '/dosen', icon: LayoutGrid },
         { title: 'KHS', href: '/dosen/khs', icon: GraduationCap },
         { title: 'Kelas Kuliah', href: '/dosen/kelas-kuliah', icon: CalendarDays },
+        { title: 'Mahasiswa Kelas', href: '/dosen/mahasiswa-kelas', icon: Users },
         { title: 'Tugas', href: '/dosen/tugas', icon: ClipboardList },
         { title: 'Materi', href: '/dosen/materi', icon: BookOpen },
         { title: 'Quiz', href: '/dosen/quiz', icon: ListChecks },

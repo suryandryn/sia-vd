@@ -3,17 +3,19 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AlertModal from '@/components/AlertModal.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
-import { ref } from 'vue';
+import { Input } from '@/components/ui/input';
+import { computed, ref } from 'vue';
 import {
     Copy,
     Download,
     Eye,
     Pencil,
     Plus,
+    Search,
     Trash2,
 } from 'lucide-vue-next';
 
-const page = usePage<{ flash: { jadwal_success?: string; jadwal_error?: string; materi_success?: string; materi_error?: string; tugas_success?: string; tugas_error?: string; quiz_success?: string; quiz_error?: string } }>();
+const page = usePage<{ flash: { success?: string; error?: string; jadwal_success?: string; jadwal_error?: string; materi_success?: string; materi_error?: string; tugas_success?: string; tugas_error?: string; quiz_success?: string; quiz_error?: string } }>();
 
 type JadwalShow = {
     id: number;
@@ -41,6 +43,16 @@ type TugasShow = {
     uploader?: { name: string } | null;
 };
 
+type KrsShow = {
+    id: number;
+    nilai?: string | null;
+    mahasiswa?: {
+        nim: string;
+        user?: { name: string } | null;
+        prodi?: { nama_prodi: string } | null;
+    } | null;
+};
+
 type QuizShow = {
     id: number;
     nama_quiz: string;
@@ -53,7 +65,8 @@ type QuizShow = {
 type KelasKuliahShowProps = {
     id: number;
     kode_kelas: string;
-    tahun_ajaran: string;
+    tahun_ajaran?: string;
+    tahunAkademik?: { tahun: string; semester: string } | null;
     kapasitas: number;
     dosen?: { id: number; nidn: string; jabatan_fungsional?: string; user?: { name: string } | null } | null;
     mata_kuliah?: { id: number; kode_matkul: string; nama_matkul: string; sks: number; semester: number; jenis: string; prodi?: { nama_prodi: string; jenjang: string; fakultas?: { nama_fakultas: string } | null } | null } | null;
@@ -62,6 +75,7 @@ type KelasKuliahShowProps = {
     materis?: MateriShow[];
     tugas?: TugasShow[];
     quizzes?: QuizShow[];
+    krs?: KrsShow[];
 };
 
 type OtherClass = {
@@ -100,6 +114,35 @@ const openDuplicate = (type: 'materi' | 'tugas' | 'quiz', item: MateriShow | Tug
     duplicateTargets.value = [];
     duplicateOpen.value = true;
 };
+
+const editingKrs = ref<number | null>(null);
+const grade = ref('');
+const gradeSearch = ref('');
+const filteredKrs = computed(() => {
+    const query = gradeSearch.value.trim().toLowerCase();
+
+    return (props.kelasKuliah.krs ?? []).filter((krs) => {
+        const name = krs.mahasiswa?.user?.name?.toLowerCase() ?? '';
+        const nim = krs.mahasiswa?.nim?.toLowerCase() ?? '';
+
+        return !query || name.includes(query) || nim.includes(query);
+    });
+});
+
+const editGrade = (krs: KrsShow) => {
+    editingKrs.value = krs.id;
+    grade.value = krs.nilai ?? '';
+};
+
+const saveGrade = (krs: KrsShow) => router.put(
+    route('dosen.kelas-kuliah.krs.nilai', [props.kelasKuliah.id, krs.id]),
+    { nilai: grade.value },
+    {
+        onSuccess: () => {
+            editingKrs.value = null;
+        },
+    },
+);
 
 const duplicate = () => {
     if (!duplicateItem.value || !duplicateTargets.value.length) return;
@@ -245,7 +288,7 @@ const formatTenggat = (value: string | null | undefined): string => {
                         </div>
                         <div class="space-y-1">
                             <dt class="text-xs font-medium uppercase tracking-[0.04em] text-[#a39e98]">Tahun Ajaran</dt>
-                            <dd class="break-words text-[15px] font-medium leading-5 text-black">{{ v(props.kelasKuliah.tahun_ajaran) }}</dd>
+                            <dd class="break-words text-[15px] font-medium leading-5 text-black">{{ props.kelasKuliah.tahunAkademik ? `${props.kelasKuliah.tahunAkademik.tahun} ${props.kelasKuliah.tahunAkademik.semester}` : v(props.kelasKuliah.tahun_ajaran) }}</dd>
                         </div>
                         <div class="space-y-1">
                             <dt class="text-xs font-medium uppercase tracking-[0.04em] text-[#a39e98]">Kapasitas</dt>
@@ -589,6 +632,64 @@ const formatTenggat = (value: string | null | undefined): string => {
                                                 <p class="text-sm font-medium text-black">Belum ada quiz</p>
                                                 <p class="mt-1 text-sm leading-5 text-[#615d59]">Tambahkan nama, durasi, tenggat waktu, dan catatan untuk kelas ini.</p>
                                             </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-xl border border-[#e6e6e6] bg-white p-6 shadow-[0_0.175px_1.041px_rgba(0,0,0,0.01),0_0.8px_2.925px_rgba(0,0,0,0.02)]">
+                    <h2 class="text-xs font-semibold uppercase tracking-[0.08em] text-[#a39e98]">Nilai Mahasiswa</h2>
+                    <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="relative w-full sm:max-w-sm">
+                            <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#a39e98]" />
+                            <Input
+                                v-model="gradeSearch"
+                                placeholder="Cari nama mahasiswa atau NIM"
+                                class="h-9 rounded-[4px] border-[#dddddd] bg-white pl-9 text-[15px] placeholder:text-[#a39e98] focus-visible:ring-1 focus-visible:ring-[#0075de]"
+                            />
+                        </div>
+                        <p class="text-sm text-[#615d59]">
+                            <span class="font-medium text-black">{{ filteredKrs.length }}</span>
+                            mahasiswa
+                        </p>
+                    </div>
+                    <div v-if="page.props.flash?.success" class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#1aae39]" role="alert">{{ page.props.flash.success }}</div>
+                    <div v-if="page.props.flash?.error" class="mt-4 rounded-xl border border-[#e6e6e6] bg-white px-4 py-3 text-sm text-[#dd5b00]" role="alert">{{ page.props.flash.error }}</div>
+                    <div class="mt-4 overflow-hidden rounded-xl border border-[#e6e6e6]">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-[720px] w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-[#e6e6e6] bg-[#f6f5f4]">
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.04em] text-[#a39e98]">No.</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.04em] text-[#a39e98]">Mahasiswa</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.04em] text-[#a39e98]">Program Studi</th>
+                                        <th class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.04em] text-[#a39e98]">Nilai</th>
+                                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.04em] text-[#a39e98]">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e6e6e6]">
+                                    <tr v-for="(krs, index) in filteredKrs" :key="krs.id" class="hover:bg-[#f6f5f4]/60">
+                                        <td class="px-4 py-3 text-sm text-[#615d59]">{{ index + 1 }}</td>
+                                        <td class="px-4 py-3 text-sm font-medium text-black">
+                                            {{ krs.mahasiswa?.user?.name ?? '-' }}
+                                            <span class="text-[#615d59]">({{ krs.mahasiswa?.nim ?? '-' }})</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-[#31302e]">{{ krs.mahasiswa?.prodi?.nama_prodi ?? '-' }}</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <select v-if="editingKrs === krs.id" v-model="grade" class="h-9 rounded-lg border border-[#e6e6e6] bg-white px-3 text-sm">
+                                                <option v-for="option in ['A', 'B', 'C', 'D', 'E']" :key="option" :value="option">{{ option }}</option>
+                                            </select>
+                                            <span v-else class="font-semibold">{{ krs.nilai ?? '-' }}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <template v-if="editingKrs === krs.id">
+                                                <Button size="sm" class="rounded-full bg-[#0075de] text-white hover:bg-[#005bab]" @click="saveGrade(krs)">Simpan</Button>
+                                                <Button size="sm" variant="outline" class="ml-2 rounded-full" @click="editingKrs = null">Batal</Button>
+                                            </template>
+                                            <Button v-else size="sm" variant="outline" class="rounded-full" @click="editGrade(krs)">Ubah Nilai</Button>
                                         </td>
                                     </tr>
                                 </tbody>

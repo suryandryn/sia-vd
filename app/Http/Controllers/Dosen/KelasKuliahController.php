@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Dosen;
 
 use App\Http\Controllers\Controller;
 use App\Models\KelasKuliah;
+use App\Models\Krs;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,6 +34,14 @@ class KelasKuliahController extends Controller
         ]);
     }
 
+    public function updateGrade(Request $request, KelasKuliah $kelasKuliah, Krs $krs): RedirectResponse
+    {
+        abort_if($kelasKuliah->dosen_id !== $request->user()?->dosenProfile?->id || $krs->kelas_id !== $kelasKuliah->id, 403);
+        $krs->update($request->validate(['nilai' => ['required', Rule::in(['A', 'B', 'C', 'D', 'E'])]]));
+
+        return back()->with('success', 'Nilai berhasil diperbarui.');
+    }
+
     public function show(Request $request, KelasKuliah $kelasKuliah): Response
     {
         $dosenProfileId = $request->user()?->dosenProfile?->id;
@@ -43,6 +54,8 @@ class KelasKuliahController extends Controller
             'materis.uploader:id,name',
             'tugas.uploader:id,name',
             'quizzes.uploader:id,name',
+            'krs.mahasiswa.user',
+            'krs.mahasiswa.prodi',
         ]);
 
         return Inertia::render('Dosen/KelasKuliahShow', [

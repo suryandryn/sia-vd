@@ -13,7 +13,7 @@ class Krs extends Model
 
     protected function casts(): array
     {
-        return ['nilai' => 'integer'];
+        return [];
     }
 
     public function mahasiswa(): BelongsTo
