@@ -58,6 +58,8 @@ class HandleInertiaRequests extends Middleware
                 'quiz_error' => fn (): ?string => $request->session()->get('quiz_error'),
                 'question_success' => fn (): ?string => $request->session()->get('question_success'),
                 'question_error' => fn (): ?string => $request->session()->get('question_error'),
+                'krs_success' => fn (): ?string => $request->session()->get('krs_success'),
+                'krs_error' => fn (): ?string => $request->session()->get('krs_error'),
             ],
         ]);
     }

@@ -50,7 +50,7 @@ const close = () => {
                     <h2 class="text-[15px] font-semibold leading-5 text-black">{{ title }}</h2>
                     <p class="mt-2 text-sm leading-5 text-[#615d59]">{{ description }}</p>
                     <div class="mt-6 flex justify-end gap-2">
-                        <Button variant="outline" class="rounded-full border-[#e6e6e6] bg-white text-black hover:bg-[#f6f5f4]" @click="close">
+                        <Button v-if="cancelText" variant="outline" class="rounded-full border-[#e6e6e6] bg-white text-black hover:bg-[#f6f5f4]" @click="close">
                             {{ cancelText }}
                         </Button>
                         <Button

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use App\Models\KelasKuliah;
 use App\Models\Krs;
+use App\Models\TahunAkademik;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,13 +20,23 @@ class KrsController extends Controller
 
         abort_if($mahasiswa === null, 403);
 
+        $tahunAkademik = TahunAkademik::where('status', true)->first();
+        $today = Carbon::today();
+        $periodeKrsAktif = $tahunAkademik !== null
+            && $today->between(
+                Carbon::parse($tahunAkademik->tanggal_krs_awal),
+                Carbon::parse($tahunAkademik->tanggal_krs_akhir),
+            );
+
         $kelasKuliahs = KelasKuliah::query()
+            ->when(! $periodeKrsAktif, fn ($query) => $query->whereKey(0))
             ->with([
                 'mataKuliah.prodi',
                 'tahunAkademik',
                 'dosen.user',
                 'jadwals' => fn ($query) => $query->with('ruang')->orderBy('jam_mulai'),
             ])
+            ->withCount('krs')
             ->whereHas('mataKuliah', fn ($query) => $query->where('prodi_id', $mahasiswa->prodi_id)->where('semester', $mahasiswa->semester))
             ->whereHas('tahunAkademik', fn ($query) => $query->where('status', true))
             ->orderBy('kode_kelas')
@@ -34,6 +46,8 @@ class KrsController extends Controller
             'kelasKuliahs' => $kelasKuliahs,
             'mahasiswa' => $mahasiswa->only(['semester', 'angkatan', 'prodi_id']),
             'kelasDiambil' => $mahasiswa->krs()->pluck('kelas_id')->values(),
+            'tahunAkademik' => $tahunAkademik,
+            'periodeKrsAktif' => $periodeKrsAktif,
         ]);
     }
 
@@ -57,7 +71,11 @@ class KrsController extends Controller
             ->exists();
 
         if ($alreadyTaken) {
-            return back()->with('krs_error', 'Anda sudah mengambil kelas di mata kuliah ini.');
+            return back()->with('krs_error', 'Anda sudah mengambil kelas di mata kuliah ini. Silakan isi form pindah kelas apabila ingin pindah kelas.');
+        }
+
+        if ($kelasKuliah->krs()->count() >= $kelasKuliah->kapasitas) {
+            return back()->with('krs_error', 'Kelas sudah penuh, silakan ambil kelas lain.');
         }
 
         Krs::create(['mahasiswa_id' => $mahasiswa->id, 'kelas_id' => $kelasKuliah->id, 'status' => 'Aktif']);

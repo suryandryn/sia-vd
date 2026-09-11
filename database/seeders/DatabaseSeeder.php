@@ -6,9 +6,13 @@ use App\Models\Fakultas;
 use App\Models\Jadwal;
 use App\Models\KelasKuliah;
 use App\Models\MataKuliah;
+use App\Models\Materi;
 use App\Models\ProgramStudi;
+use App\Models\Question;
+use App\Models\Quiz;
 use App\Models\Ruang;
 use App\Models\TahunAkademik;
+use App\Models\Tugas;
 use App\Models\User;
 use App\Role;
 use Illuminate\Database\Seeder;
@@ -91,7 +95,11 @@ class DatabaseSeeder extends Seeder
         // Mata kuliah per prodi
         $mataKuliahSeed = [
             'TI-S1' => [
-                ['IF101', 'Algoritma dan Pemrograman', 3, 1, 'Wajib'], ['IF102', 'Matematika Diskrit', 3, 1, 'Wajib'], ['IF201', 'Struktur Data', 3, 2, 'Wajib'], ['IF202', 'Basis Data', 3, 2, 'Wajib'], ['IF301', 'Pemrograman Web', 3, 3, 'Wajib'], ['IF302', 'Jaringan Komputer', 3, 3, 'Wajib'], ['IF401', 'Kecerdasan Buatan', 3, 5, 'Pilihan'], ['IF402', 'Keamanan Siber', 3, 6, 'Pilihan'],
+                ['IF101', 'Algoritma dan Pemrograman', 3, 1, 'Wajib'], ['IF102', 'Matematika Diskrit', 3, 1, 'Wajib'], ['IF201', 'Struktur Data', 3, 2, 'Wajib'], ['IF202', 'Basis Data', 3, 2, 'Wajib'], ['IF301', 'Pemrograman Web', 3, 3, 'Wajib'], ['IF302', 'Jaringan Komputer', 3, 3, 'Wajib'], ['IF401', 'Kecerdasan Buatan', 3, 5, 'Pilihan'],
+                ['IF402', 'Keamanan Siber', 3, 6, 'Pilihan'],
+                ['IF403', 'Pemrograman Mobile', 3, 6, 'Pilihan'],
+                ['IF404', 'Cloud Computing', 3, 6, 'Pilihan'],
+                ['IF405', 'Analisis Data', 3, 6, 'Pilihan'],
             ],
             'SI-S1' => [
                 ['SI101', 'Pengantar Sistem Informasi', 3, 1, 'Wajib'], ['SI102', 'Algoritma dan Pemrograman', 3, 1, 'Wajib'], ['SI201', 'Analisis dan Perancangan Sistem', 3, 2, 'Wajib'], ['SI202', 'Basis Data Lanjut', 3, 3, 'Wajib'], ['SI301', 'Manajemen Proyek TI', 3, 4, 'Wajib'], ['SI302', 'E-Bisnis', 3, 5, 'Pilihan'],
@@ -141,15 +149,90 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ($mataKuliahIds as $index => $matkulId) {
-            $suffix = chr(65 + ($index % 3));
             $mk = MataKuliah::find($matkulId);
-            $kodeKelas = $mk ? $mk->kode_matkul.'-'.$suffix : 'KK-'.$matkulId.'-'.$suffix;
-            KelasKuliah::updateOrCreate(['kode_kelas' => $kodeKelas], [
-                'tahun_akademik_id' => $tahunAkademik[$index % count($tahunAkademik)],
-                'kapasitas' => 30 + ($index % 3) * 10,
-                'dosen_id' => $dosenProfiles[$index % count($dosenProfiles)]->id,
-                'matkul_id' => $matkulId,
-            ]);
+
+            for ($section = 0; $section < 3; $section++) {
+                $suffix = chr(65 + $section);
+                $kodeKelas = $mk ? $mk->kode_matkul.'-'.$suffix : 'KK-'.$matkulId.'-'.$suffix;
+
+                KelasKuliah::updateOrCreate(['kode_kelas' => $kodeKelas], [
+                    'tahun_akademik_id' => $tahunAkademik[2],
+                    'kapasitas' => 30 + $section * 10,
+                    'dosen_id' => $section === 0
+                        ? $dosenProfiles[0]->id
+                        : $dosenProfiles[($index + $section) % count($dosenProfiles)]->id,
+                    'matkul_id' => $matkulId,
+                ]);
+            }
+        }
+
+        $kelasDosenUtama = KelasKuliah::updateOrCreate(
+            ['kode_kelas' => 'IF402-A'],
+            [
+                'tahun_akademik_id' => $tahunAkademik[2],
+                'kapasitas' => 40,
+                'dosen_id' => $dosenProfiles[0]->id,
+                'matkul_id' => MataKuliah::where('kode_matkul', 'IF402')->value('id'),
+            ],
+        );
+
+        $kelasKonten = KelasKuliah::where('dosen_id', $dosenProfiles[0]->id)
+            ->where('tahun_akademik_id', $tahunAkademik[2])
+            ->get();
+
+        foreach ($kelasKonten as $kelas) {
+            Materi::updateOrCreate(
+                ['kelas_id' => $kelas->id, 'judul_materi' => 'Pengantar Materi Perkuliahan'],
+                [
+                    'pertemuan_ke' => 1,
+                    'jenis' => 'Materi',
+                    'file' => [],
+                    'catatan' => 'Materi pembuka perkuliahan.',
+                    'uploaded_by' => $dosen->id,
+                ],
+            );
+            Materi::updateOrCreate(
+                ['kelas_id' => $kelas->id, 'judul_materi' => 'Pengumuman Perkuliahan'],
+                [
+                    'pertemuan_ke' => 1,
+                    'jenis' => 'Pengumuman',
+                    'file' => [],
+                    'catatan' => 'Perkuliahan dimulai sesuai jadwal.',
+                    'uploaded_by' => $dosen->id,
+                ],
+            );
+
+            $tugas = Tugas::updateOrCreate(
+                ['kelas_id' => $kelas->id, 'judul_tugas' => 'Tugas Pertemuan 1'],
+                [
+                    'file' => [],
+                    'tenggat_waktu' => '2025-09-15 23:59:00',
+                    'catatan' => 'Kerjakan secara mandiri.',
+                    'uploaded_by' => $dosen->id,
+                ],
+            );
+
+            $quiz = Quiz::updateOrCreate(
+                ['kelas_id' => $kelas->id, 'nama_quiz' => 'Quiz Materi Pertemuan 1'],
+                [
+                    'catatan' => 'Quiz pemahaman materi dasar.',
+                    'waktu_pengerjaan' => 30,
+                    'tenggat_waktu' => '2025-09-20 23:59:00',
+                    'uploaded_by' => $dosen->id,
+                ],
+            );
+            Question::updateOrCreate(
+                ['quiz_id' => $quiz->id, 'question_text' => 'Apa tujuan utama mempelajari materi ini?'],
+                [
+                    'question_type' => 'single_choice',
+                    'question_option' => [
+                        ['text' => 'Memahami konsep dasar', 'is_correct' => true],
+                        ['text' => 'Menghindari perkuliahan', 'is_correct' => false],
+                        ['text' => 'Menghapus tugas', 'is_correct' => false],
+                    ],
+                    'points' => 10,
+                ],
+            );
         }
 
         // Jadwal — Senin..Jumat, jam 07:00/10:00/13:00/16:00, round-robin kelas & ruang
