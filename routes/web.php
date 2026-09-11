@@ -16,7 +16,11 @@ use App\Http\Controllers\Dosen\MahasiswaKelasController;
 use App\Http\Controllers\Dosen\MateriController as DosenMateriController;
 use App\Http\Controllers\Dosen\QuizController as DosenQuizController;
 use App\Http\Controllers\Dosen\TugasController as DosenTugasController;
+use App\Http\Controllers\Mahasiswa\ContentController as MahasiswaContentController;
 use App\Http\Controllers\Mahasiswa\KrsController;
+use App\Http\Controllers\Mahasiswa\PengumpulanTugasController;
+use App\Models\KelasKuliah;
+use App\Models\Materi;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -131,10 +135,20 @@ Route::prefix('mahasiswa')->middleware(['auth', 'verified', 'role:mahasiswa'])->
     Route::get('/', fn () => Inertia::render('Dashboard'))->name('mahasiswa.dashboard');
     Route::get('krs', [KrsController::class, 'index'])->name('mahasiswa.krs');
     Route::post('krs/{kelasKuliah}', [KrsController::class, 'store'])->name('mahasiswa.krs.store');
+    Route::get('tugas', fn (Request $request) => app(MahasiswaContentController::class)->index($request, 'tugas'))->name('mahasiswa.tugas');
+    Route::get('tugas/{tugas}', [PengumpulanTugasController::class, 'show'])->name('mahasiswa.tugas.show');
+    Route::post('tugas/{tugas}/pengumpulan', [PengumpulanTugasController::class, 'store'])->name('mahasiswa.tugas.pengumpulan.store');
+    Route::get('materi', fn (Request $request) => app(MahasiswaContentController::class)->index($request, 'materi'))->name('mahasiswa.materi');
+    Route::get('materi/{materi}', fn (Request $request, Materi $materi) => app(MahasiswaContentController::class)->materiShow($request, $materi))->name('mahasiswa.materi.show');
+    Route::get('quiz', fn (Request $request) => app(MahasiswaContentController::class)->index($request, 'quiz'))->name('mahasiswa.quiz');
+
+    Route::get('jadwal', fn (Request $request) => app(MahasiswaContentController::class)->jadwalKuliah($request))
+        ->name('mahasiswa.jadwal-kuliah');
+    Route::get('jadwal/{kelasKuliah}', fn (Request $request, KelasKuliah $kelasKuliah) => app(MahasiswaContentController::class)->show($request, $kelasKuliah))
+        ->name('mahasiswa.jadwal-kuliah.show');
 
     foreach ([
-        'profile' => 'Profile', 'jadwal-kuliah' => 'Jadwal Kuliah', 'info-perkuliahan' => 'Info Perkuliahan',
-        'tugas' => 'Tugas', 'materi' => 'Materi', 'quiz' => 'Quiz',
+        'profile' => 'Profile', 'info-perkuliahan' => 'Info Perkuliahan',
         'khs' => 'KHS', 'pendaftaran-wisuda' => 'Pendaftaran Wisuda', 'perpustakaan' => 'Perpustakaan',
         'info-biaya-kuliah' => 'Info Biaya Kuliah', 'khs/transkrip-nilai' => 'Transkrip Nilai',
         'perpustakaan/pinjaman-aktif' => 'Pinjaman Aktif', 'perpustakaan/riwayat-pinjaman' => 'Riwayat Pinjaman',
